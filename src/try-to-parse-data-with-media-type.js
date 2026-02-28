@@ -29,9 +29,7 @@ export function tryToParseDataWithMediaType(
             dataSourceUri,
           );
         } else {
-          throw new InvalidArgumentError(
-            'Unable to parse a value as JSON.',
-          );
+          throw new InvalidArgumentError('Unable to parse a value as JSON.');
         }
       }
       return res;

@@ -1120,10 +1120,7 @@ export function requestValidationOpenApiHook(ctx) {
                 paramUriForHuman,
               );
             } catch (error) {
-              throw createError(
-                HttpErrors.BadRequest,
-                error.message,
-              );
+              throw createError(HttpErrors.BadRequest, error.message);
             }
             // при неудачной проверке значения
             // параметра выбрасывается ошибка
@@ -1595,13 +1592,10 @@ export function responseValidationOpenApiHook(ctx, data) {
               parsedValue = tryToParseDataWithMediaType(
                 data,
                 responseMediaType,
-                '/response/body'
+                '/response/body',
               );
             } catch (error) {
-              throw createError(
-                HttpErrors.InternalServerError,
-                error.message
-              );
+              throw createError(HttpErrors.InternalServerError, error.message);
             }
             // при неудачной проверке тела
             // ответа выбрасывается ошибка

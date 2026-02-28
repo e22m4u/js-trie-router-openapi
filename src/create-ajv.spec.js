@@ -4,7 +4,7 @@ import {createAjv} from './create-ajv.js';
 import {OADataType} from '@e22m4u/js-openapi';
 
 describe('createAjv', function () {
-  it('should return Ajv2020 instance', function() {
+  it('should return Ajv2020 instance', function () {
     const res = createAjv();
     expect(res).to.be.instanceOf(Ajv2020);
   });

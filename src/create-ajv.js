@@ -3,8 +3,8 @@ import Ajv2020 from 'ajv/dist/2020.js';
 
 /**
  * Create AJV instance.
- * 
- * @param {import('ajv/dist/2020.js').InstanceOptions} options 
+ *
+ * @param {import('ajv/dist/2020.js').InstanceOptions} options
  * @returns {import('ajv/dist/2020.js').Ajv2020}
  */
 export function createAjv(options = {}) {

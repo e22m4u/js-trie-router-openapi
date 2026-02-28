@@ -23,11 +23,8 @@ describe('tryToParseDataWithMediaType', function () {
     it('should throw an error for an invalid JSON', function () {
       const invalidJson = '{"foo":"bar"';
       const throwable = () => {
-        tryToParseDataWithMediaType(
-          invalidJson,
-          OAMediaType.APPLICATION_JSON,
-        );
-      }
+        tryToParseDataWithMediaType(invalidJson, OAMediaType.APPLICATION_JSON);
+      };
       expect(throwable).to.throw(
         InvalidArgumentError,
         'Unable to parse a value as JSON.',
@@ -40,9 +37,9 @@ describe('tryToParseDataWithMediaType', function () {
         tryToParseDataWithMediaType(
           invalidJson,
           OAMediaType.APPLICATION_JSON,
-          '/request/query/param'
+          '/request/query/param',
         );
-      }
+      };
       expect(throwable).to.throw(
         InvalidArgumentError,
         'Unable to parse a value at "/request/query/param" as JSON.',

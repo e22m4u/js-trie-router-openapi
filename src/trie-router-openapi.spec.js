@@ -257,7 +257,9 @@ describe('TrieRouterOpenApi', function () {
     it('should require the option "useDefaultValuesInRequestParameters" to be a Boolean', function () {
       const throwable = v => () => {
         const container = new ServiceContainer();
-        new TrieRouterOpenApi(container, {useDefaultValuesInRequestParameters: v});
+        new TrieRouterOpenApi(container, {
+          useDefaultValuesInRequestParameters: v,
+        });
       };
       const error = s =>
         format(
@@ -3872,7 +3874,7 @@ describe('TrieRouterOpenApi', function () {
           expect(res).to.be.eql('bar');
         });
 
-        it('should send an error when parsing of the query parameter fails', async function() {
+        it('should send an error when parsing of the query parameter fails', async function () {
           const router = new TrieRouter();
           router.useService(TrieRouterOpenApi, {validateRequest: true});
           const request = createRequestMock({
@@ -3913,7 +3915,7 @@ describe('TrieRouterOpenApi', function () {
           });
         });
 
-        it('should send an error when parsing of the request header fails', async function() {
+        it('should send an error when parsing of the request header fails', async function () {
           const router = new TrieRouter();
           router.useService(TrieRouterOpenApi, {validateRequest: true});
           const request = createRequestMock({
@@ -3954,7 +3956,7 @@ describe('TrieRouterOpenApi', function () {
           });
         });
 
-        it('should send an error when parsing of the request cookie fails', async function() {
+        it('should send an error when parsing of the request cookie fails', async function () {
           const router = new TrieRouter();
           router.useService(TrieRouterOpenApi, {validateRequest: true});
           const request = createRequestMock({
@@ -4373,7 +4375,7 @@ describe('TrieRouterOpenApi', function () {
           expect(res).to.be.eql('bar');
         });
 
-        it('should send an error when parsing of the query parameter fails', async function() {
+        it('should send an error when parsing of the query parameter fails', async function () {
           const router = new TrieRouter();
           router.useService(TrieRouterOpenApi, {validateRequest: true});
           const builder = router.getService(OADocumentBuilder);
@@ -4414,7 +4416,7 @@ describe('TrieRouterOpenApi', function () {
           });
         });
 
-        it('should send an error when parsing of the request header fails', async function() {
+        it('should send an error when parsing of the request header fails', async function () {
           const router = new TrieRouter();
           router.useService(TrieRouterOpenApi, {validateRequest: true});
           const builder = router.getService(OADocumentBuilder);
@@ -4455,7 +4457,7 @@ describe('TrieRouterOpenApi', function () {
           });
         });
 
-        it('should send an error when parsing of the request cookie fails', async function() {
+        it('should send an error when parsing of the request cookie fails', async function () {
           const router = new TrieRouter();
           router.useService(TrieRouterOpenApi, {validateRequest: true});
           const builder = router.getService(OADocumentBuilder);
@@ -6694,7 +6696,7 @@ describe('TrieRouterOpenApi', function () {
           });
         });
 
-        it('should send an error when parsing of the request body fails', async function() {
+        it('should send an error when parsing of the request body fails', async function () {
           const router = new TrieRouter();
           router.useService(TrieRouterOpenApi, {validateResponse: true});
           const request = createRequestMock({
@@ -6815,7 +6817,7 @@ describe('TrieRouterOpenApi', function () {
           });
         });
 
-        it('should send an error when parsing of the request body fails', async function() {
+        it('should send an error when parsing of the request body fails', async function () {
           const router = new TrieRouter();
           router.useService(TrieRouterOpenApi, {validateResponse: true});
           const builder = router.getService(OADocumentBuilder);
@@ -6860,7 +6862,7 @@ describe('TrieRouterOpenApi', function () {
       });
 
       describe('when the option "coerceResponseBodyDataType" is true', function () {
-        describe('type coercion against "/meta/openApi/responses/{statusCode}/content/{mediaType}/schema"', function() {
+        describe('type coercion against "/meta/openApi/responses/{statusCode}/content/{mediaType}/schema"', function () {
           it('should coerce type of the response body', async function () {
             const router = new TrieRouter();
             router.useService(TrieRouterOpenApi, {
@@ -6904,7 +6906,7 @@ describe('TrieRouterOpenApi', function () {
           });
         });
 
-        describe('type coercion against "#/components/responses/{name}/content/{mediaType}/schema"', function() {
+        describe('type coercion against "#/components/responses/{name}/content/{mediaType}/schema"', function () {
           it('should coerce type of the response body', async function () {
             const router = new TrieRouter();
             router.useService(TrieRouterOpenApi, {
@@ -6954,7 +6956,7 @@ describe('TrieRouterOpenApi', function () {
       });
 
       describe('when the option "removeAdditionalResponseData" is true', function () {
-        describe('removing additional data against "/meta/openApi/responses/{statusCode}/content/{mediaType}/schema"', function() {
+        describe('removing additional data against "/meta/openApi/responses/{statusCode}/content/{mediaType}/schema"', function () {
           it('should remove additional data from the response body', async function () {
             const router = new TrieRouter();
             router.useService(TrieRouterOpenApi, {
@@ -6999,7 +7001,7 @@ describe('TrieRouterOpenApi', function () {
           });
         });
 
-        describe('removing additional data against "#/components/responses/{name}/content/{mediaType}/schema"', function() {
+        describe('removing additional data against "#/components/responses/{name}/content/{mediaType}/schema"', function () {
           it('should remove additional data from the response body', async function () {
             const router = new TrieRouter();
             router.useService(TrieRouterOpenApi, {
@@ -7050,7 +7052,7 @@ describe('TrieRouterOpenApi', function () {
       });
 
       describe('when the option "useDefaultValuesInResponseBody" is true', function () {
-        describe('using default values from "/meta/openApi/responses/{statusCode}/content/{mediaType}/schema"', function() {
+        describe('using default values from "/meta/openApi/responses/{statusCode}/content/{mediaType}/schema"', function () {
           it('should set default value to the response body', async function () {
             const router = new TrieRouter();
             router.useService(TrieRouterOpenApi, {
@@ -7097,7 +7099,7 @@ describe('TrieRouterOpenApi', function () {
           });
         });
 
-        describe('using default values from "#/components/responses/{name}/content/{mediaType}/schema"', function() {
+        describe('using default values from "#/components/responses/{name}/content/{mediaType}/schema"', function () {
           it('should set default value to the response body', async function () {
             const router = new TrieRouter();
             router.useService(TrieRouterOpenApi, {
