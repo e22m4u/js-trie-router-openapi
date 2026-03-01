@@ -230,6 +230,7 @@ router.useService(TrieRouterOpenApi, {
 
 Доступные параметры:
 
+- [document](#document)
 - [validateRequest](#validaterequest)
 - [validateResponse](#validateresponse)
 - [parseRequestParameterContent](#parserequestparametercontent)
@@ -241,6 +242,15 @@ router.useService(TrieRouterOpenApi, {
 - [useDefaultValuesInRequestParameters](#usedefaultvaluesinrequestparameters)
 - [useDefaultValuesInRequestBody](#usedefaultvaluesinrequestbody)
 - [useDefaultValuesInResponseBody](#usedefaultvaluesinresponsebody)
+
+#### document
+
+Тип: `object`  
+По умолчанию: `{info: {title: 'API Documentation', version: '0.0.1'}}`
+
+Позволяет задать базовую структуру OpenAPI документа при инициализации
+расширения. Сюда передаются корневые настройки спецификации список серверов,
+глобальные требования безопасности и заранее подготовленные компоненты.
 
 #### validateRequest
 
