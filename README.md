@@ -228,7 +228,29 @@ router.useService(TrieRouterOpenApi, {
 });
 ```
 
-Доступные параметры:
+### Порядок объявления компонентов и маршрутов
+
+При включении валидации параметром `validateRequest` или `validateResponse`,
+для достижения максимальной производительности и экономии оперативной памяти,
+маршрутизатор кэширует глобальный словарь OpenAPI-компонентов.
+
+Кэширование происходит в момент регистрации первого маршрута. Данный подход
+требует соблюдения строгого порядка инициализации приложения. Все глобальные
+компоненты должны быть добавлены до регистрации первого маршрута.
+
+```js
+const builder = router.getService(OADocumentBuilder);
+
+// 1. сначала объявляются все схемы и компоненты
+builder.defineSchemaComponent('user', {/* ... */});
+builder.defineSchemaComponent('post', {/* ... */});
+
+// 2. только после этого регистрируются маршруты
+router.defineRoute({path: '/users', /* ... */});
+router.defineRoute({path: '/posts', /* ... */});
+```
+
+### Параметры
 
 - [document](#document)
 - [validateRequest](#validaterequest)

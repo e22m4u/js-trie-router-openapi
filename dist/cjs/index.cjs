@@ -134,6 +134,7 @@ var NOT_VALIDABLE_MEDIA_TYPES = [
   import_js_openapi2.OAMediaType.APPLICATION_OCTET_STREAM,
   import_js_openapi2.OAMediaType.MULTIPART_FORM_DATA
 ];
+var OA_COMPONENTS_AJV_ID = "OAComponents";
 var _TrieRouterOpenApi = class _TrieRouterOpenApi extends import_js_service.Service {
   /**
    * Options.
@@ -292,21 +293,13 @@ var _TrieRouterOpenApi = class _TrieRouterOpenApi extends import_js_service.Serv
     }
   }
   /**
-   * Get options.
-   *
-   * @returns {import('./trie-router-openapi.js').TrieRouterOpenApiOption}
-   */
-  getOptions() {
-    return this._options;
-  }
-  /**
    * Get compiled Ajv validator.
    *
    * @param {string} key
    * @param {Function} validator
    * @returns {this}
    */
-  setCompiledAjvValidator(key, validator) {
+  _setCompiledAjvValidator(key, validator) {
     if (!key || typeof key !== "string") {
       throw new import_js_format4.InvalidArgumentError(
         'Parameter "key" must be a non-empty String, but %v was given.',
@@ -328,7 +321,7 @@ var _TrieRouterOpenApi = class _TrieRouterOpenApi extends import_js_service.Serv
    * @param {string} key
    * @returns {boolean}
    */
-  hasCompiledAjvValidator(key) {
+  _hasCompiledAjvValidator(key) {
     if (!key || typeof key !== "string") {
       throw new import_js_format4.InvalidArgumentError(
         'Parameter "key" must be a non-empty String, but %v was given.',
@@ -344,7 +337,7 @@ var _TrieRouterOpenApi = class _TrieRouterOpenApi extends import_js_service.Serv
    * @param {string} key
    * @returns {Function}
    */
-  getCompiledAjvValidator(key) {
+  _getCompiledAjvValidator(key) {
     if (!key || typeof key !== "string") {
       throw new import_js_format4.InvalidArgumentError(
         'Parameter "key" must be a non-empty String, but %v was given.',
@@ -360,9 +353,9 @@ var _TrieRouterOpenApi = class _TrieRouterOpenApi extends import_js_service.Serv
   /**
    * Get parameters Ajv instance.
    *
-   * @returns {Function}
+   * @returns {import('ajv/dist/2020.js').Ajv2020}
    */
-  getParametersAjvInstance() {
+  _getParametersAjvInstance() {
     if (this._parametersAjv) {
       return this._parametersAjv;
     }
@@ -376,9 +369,9 @@ var _TrieRouterOpenApi = class _TrieRouterOpenApi extends import_js_service.Serv
   /**
    * Get request body Ajv instance.
    *
-   * @returns {Function}
+   * @returns {import('ajv/dist/2020.js').Ajv2020}
    */
-  getRequestBodyAjvInstance() {
+  _getRequestBodyAjvInstance() {
     if (this._requestBodyAjv) {
       return this._requestBodyAjv;
     }
@@ -392,9 +385,9 @@ var _TrieRouterOpenApi = class _TrieRouterOpenApi extends import_js_service.Serv
   /**
    * Get response body Ajv instance.
    *
-   * @returns {Function}
+   * @returns {import('ajv/dist/2020.js').Ajv2020}
    */
-  getResponseBodyAjvInstance() {
+  _getResponseBodyAjvInstance() {
     if (this._responseBodyAjv) {
       return this._responseBodyAjv;
     }
@@ -405,6 +398,43 @@ var _TrieRouterOpenApi = class _TrieRouterOpenApi extends import_js_service.Serv
     });
     return this._responseBodyAjv;
   }
+  /**
+   * Единоразово регистрирует компоненты в экземпляре Ajv.
+   *
+   * @param {Function} ajv
+   * @param {object} components
+   */
+  _ensureComponentsRegistered(ajv, components) {
+    if (components && !ajv.getSchema(OA_COMPONENTS_AJV_ID)) {
+      ajv.addSchema({
+        $id: OA_COMPONENTS_AJV_ID,
+        components
+      });
+    }
+  }
+  /**
+   * Рекурсивно переписывает локальные ссылки на глобальные.
+   *
+   * @param {boolean|object|object[]} schema
+   * @returns {boolean|object|object[]}
+   */
+  _rewriteSchemaRefs(schema) {
+    if (!schema || typeof schema !== "object") {
+      return schema;
+    }
+    if (Array.isArray(schema)) {
+      return schema.map((item) => this._rewriteSchemaRefs(item));
+    }
+    const rewritten = {};
+    for (const [key, value] of Object.entries(schema)) {
+      if (key === "$ref" && typeof value === "string" && value.startsWith("#/components/")) {
+        rewritten[key] = OA_COMPONENTS_AJV_ID + value;
+      } else {
+        rewritten[key] = this._rewriteSchemaRefs(value);
+      }
+    }
+    return rewritten;
+  }
 };
 __name(_TrieRouterOpenApi, "TrieRouterOpenApi");
 var TrieRouterOpenApi = _TrieRouterOpenApi;
@@ -414,7 +444,7 @@ function onDefineRouteOpenApiHook(routeDef, container) {
   }
   const inst = container.get(TrieRouterOpenApi);
   const builder = container.get(import_js_openapi2.OADocumentBuilder);
-  const options = inst.getOptions();
+  const options = inst._options;
   const oaOperationPath = trieRouterPathToOpenApiPath(routeDef.path);
   const oaOperationMethod = routeDef.method.toLowerCase();
   if (routeDef.meta.openApi === true) {
@@ -432,7 +462,7 @@ function onDefineRouteOpenApiHook(routeDef, container) {
     if (options.validateRequest === true) {
       if (routeDef.meta.openApi.parameters !== void 0) {
         const oaParameters = routeDef.meta.openApi.parameters;
-        const ajv = inst.getParametersAjvInstance();
+        const ajv = inst._getParametersAjvInstance();
         for (let index = 0, l = oaParameters.length; index < l; index++) {
           let oaParameterObject = oaParameters[index];
           if (oaParameterObject.$ref !== void 0) {
@@ -447,12 +477,15 @@ function onDefineRouteOpenApiHook(routeDef, container) {
               "/parameters",
               "/" + index
             ].join("");
+            inst._ensureComponentsRegistered(ajv, oaDocumentObject.components);
+            const safeOaSchema = inst._rewriteSchemaRefs(
+              oaParameterObject.schema
+            );
             const validator = ajv.compile({
               type: import_js_openapi2.OADataType.OBJECT,
-              properties: { value: oaParameterObject.schema },
-              components: oaDocumentObject.components
+              properties: { value: safeOaSchema }
             });
-            inst.setCompiledAjvValidator(validatorKey, validator);
+            inst._setCompiledAjvValidator(validatorKey, validator);
             if (routeDef.method === import_js_trie_router.HttpMethod.GET) {
               const validatorKeyForHeadMethod = [
                 "/head",
@@ -460,7 +493,7 @@ function onDefineRouteOpenApiHook(routeDef, container) {
                 "/parameters",
                 "/" + index
               ].join("");
-              inst.setCompiledAjvValidator(
+              inst._setCompiledAjvValidator(
                 validatorKeyForHeadMethod,
                 validator
               );
@@ -482,12 +515,18 @@ function onDefineRouteOpenApiHook(routeDef, container) {
                   "/" + index,
                   "/" + escapedMediaType
                 ].join("");
+                inst._ensureComponentsRegistered(
+                  ajv,
+                  oaDocumentObject.components
+                );
+                const safeOaSchema = inst._rewriteSchemaRefs(
+                  oaMediaTypeObject.schema
+                );
                 const validator = ajv.compile({
                   type: import_js_openapi2.OADataType.OBJECT,
-                  properties: { value: oaMediaTypeObject.schema },
-                  components: oaDocumentObject.components
+                  properties: { value: safeOaSchema }
                 });
-                inst.setCompiledAjvValidator(validatorKey, validator);
+                inst._setCompiledAjvValidator(validatorKey, validator);
                 if (routeDef.method === import_js_trie_router.HttpMethod.GET) {
                   const validatorKeyForHeadMethod = [
                     "/head",
@@ -496,7 +535,7 @@ function onDefineRouteOpenApiHook(routeDef, container) {
                     "/" + index,
                     "/" + escapedMediaType
                   ].join("");
-                  inst.setCompiledAjvValidator(
+                  inst._setCompiledAjvValidator(
                     validatorKeyForHeadMethod,
                     validator
                   );
@@ -508,7 +547,7 @@ function onDefineRouteOpenApiHook(routeDef, container) {
       }
       if (routeDef.meta.openApi.requestBody !== void 0) {
         let oaRequestBodyObject = routeDef.meta.openApi.requestBody;
-        const ajv = inst.getRequestBodyAjvInstance();
+        const ajv = inst._getRequestBodyAjvInstance();
         if (oaRequestBodyObject.$ref !== void 0) {
           oaRequestBodyObject = (0, import_js_openapi2.resolveOAReferenceObject)(oaRequestBodyObject, {
             rootDocument: oaDocumentObject
@@ -528,12 +567,15 @@ function onDefineRouteOpenApiHook(routeDef, container) {
               "/requestBody",
               "/" + escapedMediaType
             ].join("");
+            inst._ensureComponentsRegistered(ajv, oaDocumentObject.components);
+            const safeOaSchema = inst._rewriteSchemaRefs(
+              oaMediaTypeObject.schema
+            );
             const validator = ajv.compile({
               type: import_js_openapi2.OADataType.OBJECT,
-              properties: { value: oaMediaTypeObject.schema },
-              components: oaDocumentObject.components
+              properties: { value: safeOaSchema }
             });
-            inst.setCompiledAjvValidator(validatorKey, validator);
+            inst._setCompiledAjvValidator(validatorKey, validator);
             if (routeDef.method === import_js_trie_router.HttpMethod.GET) {
               const validatorKeyForHeadMethod = [
                 "/head",
@@ -541,7 +583,7 @@ function onDefineRouteOpenApiHook(routeDef, container) {
                 "/requestBody",
                 "/" + escapedMediaType
               ].join("");
-              inst.setCompiledAjvValidator(
+              inst._setCompiledAjvValidator(
                 validatorKeyForHeadMethod,
                 validator
               );
@@ -553,7 +595,7 @@ function onDefineRouteOpenApiHook(routeDef, container) {
     if (options.validateResponse === true) {
       if (routeDef.meta.openApi.responses !== void 0) {
         const oaResponses = routeDef.meta.openApi.responses;
-        const ajv = inst.getResponseBodyAjvInstance();
+        const ajv = inst._getResponseBodyAjvInstance();
         for (const oaStatusCodeKey of Object.keys(oaResponses)) {
           let oaResponseObject = oaResponses[oaStatusCodeKey];
           if (oaResponseObject.$ref !== void 0) {
@@ -577,12 +619,18 @@ function onDefineRouteOpenApiHook(routeDef, container) {
                   "/" + oaStatusCodeKey,
                   "/" + escapedMediaType
                 ].join("");
+                inst._ensureComponentsRegistered(
+                  ajv,
+                  oaDocumentObject.components
+                );
+                const safeOaSchema = inst._rewriteSchemaRefs(
+                  oaMediaTypeObject.schema
+                );
                 const validator = ajv.compile({
                   type: import_js_openapi2.OADataType.OBJECT,
-                  properties: { value: oaMediaTypeObject.schema },
-                  components: oaDocumentObject.components
+                  properties: { value: safeOaSchema }
                 });
-                inst.setCompiledAjvValidator(validatorKey, validator);
+                inst._setCompiledAjvValidator(validatorKey, validator);
                 if (routeDef.method === import_js_trie_router.HttpMethod.GET) {
                   const validatorKeyForHeadMethod = [
                     "/head",
@@ -591,7 +639,7 @@ function onDefineRouteOpenApiHook(routeDef, container) {
                     "/" + oaStatusCodeKey,
                     "/" + escapedMediaType
                   ].join("");
-                  inst.setCompiledAjvValidator(
+                  inst._setCompiledAjvValidator(
                     validatorKeyForHeadMethod,
                     validator
                   );
@@ -617,7 +665,7 @@ function requestValidationOpenApiHook(ctx) {
   }
   const inst = ctx.container.get(TrieRouterOpenApi);
   const builder = ctx.container.get(import_js_openapi2.OADocumentBuilder);
-  const options = inst.getOptions();
+  const options = inst._options;
   const oaDocumentObject = builder.getDocumentObjectRef();
   const oaOperationPath = trieRouterPathToOpenApiPath(ctx.route.path);
   const oaOperationMethod = ctx.method.toLowerCase();
@@ -659,7 +707,7 @@ function requestValidationOpenApiHook(ctx) {
           "/parameters",
           "/" + index
         ].join("");
-        const validate = inst.getCompiledAjvValidator(validatorKey);
+        const validate = inst._getCompiledAjvValidator(validatorKey);
         const valueContainer = { value: paramValue };
         const isValid = validate(valueContainer);
         if (!isValid) {
@@ -716,7 +764,7 @@ function requestValidationOpenApiHook(ctx) {
             } catch (error) {
               throw createError(import_http_errors.default.BadRequest, error.message);
             }
-            const validate = inst.getCompiledAjvValidator(validatorKey);
+            const validate = inst._getCompiledAjvValidator(validatorKey);
             const valueContainer = { value: parsedValue };
             const isValid = validate(valueContainer);
             if (!isValid) {
@@ -796,7 +844,7 @@ function requestValidationOpenApiHook(ctx) {
               "/requestBody",
               "/" + (0, import_js_openapi2.escapeJsonPointer)(mediaType)
             ].join("");
-            const validate = inst.getCompiledAjvValidator(validatorKey);
+            const validate = inst._getCompiledAjvValidator(validatorKey);
             const valueContainer = { value: ctx.body };
             const isValid = validate(valueContainer);
             if (!isValid) {
@@ -827,13 +875,16 @@ function responseValidationOpenApiHook(ctx, data) {
   }
   const inst = ctx.container.get(TrieRouterOpenApi);
   const builder = ctx.container.get(import_js_openapi2.OADocumentBuilder);
-  const options = inst.getOptions();
+  const options = inst._options;
   const oaDocumentObject = builder.getDocumentObjectRef();
   const oaOperationPath = trieRouterPathToOpenApiPath(ctx.route.path);
   const oaOperationMethod = ctx.method.toLowerCase();
   if (oaOperationObject.responses !== void 0) {
     const oaResponsesObject = oaOperationObject.responses;
-    const responseStatusCode = ctx.response.statusCode;
+    let responseStatusCode = ctx.response.statusCode;
+    if (data == null) {
+      responseStatusCode = 204;
+    }
     let oaStatusCodeKey;
     let oaResponseObject;
     if (responseStatusCode !== void 0) {
@@ -875,15 +926,19 @@ function responseValidationOpenApiHook(ctx, data) {
         }
         responseMediaType = mediaType;
       } else if (data != null) {
-        switch (typeof data) {
-          case "object":
-          case "boolean":
-          case "number":
-            responseMediaType = Buffer.isBuffer(data) ? "application/octet-stream" : "application/json";
-            break;
-          default:
-            responseMediaType = "text/plain";
-            break;
+        if ((0, import_js_trie_router.isReadableStream)(data)) {
+          responseMediaType = "application/octet-stream";
+        } else {
+          switch (typeof data) {
+            case "object":
+            case "boolean":
+            case "number":
+              responseMediaType = Buffer.isBuffer(data) ? "application/octet-stream" : "application/json";
+              break;
+            default:
+              responseMediaType = "text/plain";
+              break;
+          }
         }
       }
       if (!responseMediaType && data == null) {
@@ -912,7 +967,7 @@ function responseValidationOpenApiHook(ctx, data) {
             } catch (error) {
               throw createError(import_http_errors.default.InternalServerError, error.message);
             }
-            const validate = inst.getCompiledAjvValidator(validatorKey);
+            const validate = inst._getCompiledAjvValidator(validatorKey);
             const valueContainer = { value: parsedValue };
             const isValid = validate(valueContainer);
             if (!isValid) {

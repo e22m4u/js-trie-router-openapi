@@ -8,9 +8,10 @@ import {tryToParseDataWithMediaType} from './try-to-parse-data-with-media-type.j
 import {
   TrieRouter,
   HttpMethod,
+  hasRequestBody,
   RouterHookType,
   parseContentType,
-  hasRequestBody,
+  isReadableStream,
 } from '@e22m4u/js-trie-router';
 
 import {
@@ -49,6 +50,11 @@ const NOT_VALIDABLE_MEDIA_TYPES = [
   OAMediaType.APPLICATION_OCTET_STREAM,
   OAMediaType.MULTIPART_FORM_DATA,
 ];
+
+/**
+ * Components ajv id.
+ */
+const OA_COMPONENTS_AJV_ID = 'OAComponents';
 
 /**
  * Trie router OpenAPI.
@@ -265,22 +271,13 @@ export class TrieRouterOpenApi extends Service {
   }
 
   /**
-   * Get options.
-   *
-   * @returns {import('./trie-router-openapi.js').TrieRouterOpenApiOption}
-   */
-  getOptions() {
-    return this._options;
-  }
-
-  /**
    * Get compiled Ajv validator.
    *
    * @param {string} key
    * @param {Function} validator
    * @returns {this}
    */
-  setCompiledAjvValidator(key, validator) {
+  _setCompiledAjvValidator(key, validator) {
     if (!key || typeof key !== 'string') {
       throw new InvalidArgumentError(
         'Parameter "key" must be a non-empty String, but %v was given.',
@@ -303,7 +300,7 @@ export class TrieRouterOpenApi extends Service {
    * @param {string} key
    * @returns {boolean}
    */
-  hasCompiledAjvValidator(key) {
+  _hasCompiledAjvValidator(key) {
     if (!key || typeof key !== 'string') {
       throw new InvalidArgumentError(
         'Parameter "key" must be a non-empty String, but %v was given.',
@@ -320,7 +317,7 @@ export class TrieRouterOpenApi extends Service {
    * @param {string} key
    * @returns {Function}
    */
-  getCompiledAjvValidator(key) {
+  _getCompiledAjvValidator(key) {
     if (!key || typeof key !== 'string') {
       throw new InvalidArgumentError(
         'Parameter "key" must be a non-empty String, but %v was given.',
@@ -337,9 +334,9 @@ export class TrieRouterOpenApi extends Service {
   /**
    * Get parameters Ajv instance.
    *
-   * @returns {Function}
+   * @returns {import('ajv/dist/2020.js').Ajv2020}
    */
-  getParametersAjvInstance() {
+  _getParametersAjvInstance() {
     if (this._parametersAjv) {
       return this._parametersAjv;
     }
@@ -354,9 +351,9 @@ export class TrieRouterOpenApi extends Service {
   /**
    * Get request body Ajv instance.
    *
-   * @returns {Function}
+   * @returns {import('ajv/dist/2020.js').Ajv2020}
    */
-  getRequestBodyAjvInstance() {
+  _getRequestBodyAjvInstance() {
     if (this._requestBodyAjv) {
       return this._requestBodyAjv;
     }
@@ -371,9 +368,9 @@ export class TrieRouterOpenApi extends Service {
   /**
    * Get response body Ajv instance.
    *
-   * @returns {Function}
+   * @returns {import('ajv/dist/2020.js').Ajv2020}
    */
-  getResponseBodyAjvInstance() {
+  _getResponseBodyAjvInstance() {
     if (this._responseBodyAjv) {
       return this._responseBodyAjv;
     }
@@ -383,6 +380,51 @@ export class TrieRouterOpenApi extends Service {
       useDefaults: this._options.useDefaultValuesInResponseBody,
     });
     return this._responseBodyAjv;
+  }
+
+  /**
+   * Единоразово регистрирует компоненты в экземпляре Ajv.
+   *
+   * @param {Function} ajv
+   * @param {object} components
+   */
+  _ensureComponentsRegistered(ajv, components) {
+    if (components && !ajv.getSchema(OA_COMPONENTS_AJV_ID)) {
+      ajv.addSchema({
+        $id: OA_COMPONENTS_AJV_ID,
+        components: components,
+      });
+    }
+  }
+
+  /**
+   * Рекурсивно переписывает локальные ссылки на глобальные.
+   *
+   * @param {boolean|object|object[]} schema
+   * @returns {boolean|object|object[]}
+   */
+  _rewriteSchemaRefs(schema) {
+    if (!schema || typeof schema !== 'object') {
+      return schema;
+    }
+    if (Array.isArray(schema)) {
+      return schema.map(item => this._rewriteSchemaRefs(item));
+    }
+    const rewritten = {};
+    for (const [key, value] of Object.entries(schema)) {
+      // "#/components/schemas/X" =>
+      // "OAComponents#/components/schemas/X"
+      if (
+        key === '$ref' &&
+        typeof value === 'string' &&
+        value.startsWith('#/components/')
+      ) {
+        rewritten[key] = OA_COMPONENTS_AJV_ID + value;
+      } else {
+        rewritten[key] = this._rewriteSchemaRefs(value);
+      }
+    }
+    return rewritten;
   }
 }
 
@@ -405,7 +447,7 @@ export function onDefineRouteOpenApiHook(routeDef, container) {
   }
   const inst = container.get(TrieRouterOpenApi);
   const builder = container.get(OADocumentBuilder);
-  const options = inst.getOptions();
+  const options = inst._options;
   // замена формата пути TrieRouter на OpenAPI
   // пример: "/users/:id" => "/users/{id}"
   const oaOperationPath = trieRouterPathToOpenApiPath(routeDef.path);
@@ -455,7 +497,7 @@ export function onDefineRouteOpenApiHook(routeDef, container) {
         // создание нового или извлечение существующего
         // экземпляра Ajv для компиляции валидаторов
         // параметров запроса
-        const ajv = inst.getParametersAjvInstance();
+        const ajv = inst._getParametersAjvInstance();
         // parameters[i]
         for (let index = 0, l = oaParameters.length; index < l; index++) {
           let oaParameterObject = oaParameters[index];
@@ -491,12 +533,20 @@ export function onDefineRouteOpenApiHook(routeDef, container) {
               '/parameters',
               '/' + index,
             ].join('');
+            // перед компиляцией выполняется единоразовая
+            // регистрация зарегистрированных компонентов
+            // в экземпляре Ajv и конвертация ссылок $ref
+            inst._ensureComponentsRegistered(ajv, oaDocumentObject.components);
+            const safeOaSchema = inst._rewriteSchemaRefs(
+              oaParameterObject.schema,
+            );
+            // валидатор сохраняется под уникальным ключом
+            // для быстрого доступа во время проверки данных
             const validator = ajv.compile({
               type: OADataType.OBJECT,
-              properties: {value: oaParameterObject.schema},
-              components: oaDocumentObject.components,
+              properties: {value: safeOaSchema},
             });
-            inst.setCompiledAjvValidator(validatorKey, validator);
+            inst._setCompiledAjvValidator(validatorKey, validator);
             // если методом маршрута является GET,
             // то добавляется дополнительный ключ
             // для метода HEAD с тем же валидатором
@@ -508,7 +558,7 @@ export function onDefineRouteOpenApiHook(routeDef, container) {
                 '/parameters',
                 '/' + index,
               ].join('');
-              inst.setCompiledAjvValidator(
+              inst._setCompiledAjvValidator(
                 validatorKeyForHeadMethod,
                 validator,
               );
@@ -566,12 +616,23 @@ export function onDefineRouteOpenApiHook(routeDef, container) {
                   '/' + index,
                   '/' + escapedMediaType,
                 ].join('');
+                // перед компиляцией выполняется единоразовая
+                // регистрация зарегистрированных компонентов
+                // в экземпляре Ajv и конвертация ссылок $ref
+                inst._ensureComponentsRegistered(
+                  ajv,
+                  oaDocumentObject.components,
+                );
+                const safeOaSchema = inst._rewriteSchemaRefs(
+                  oaMediaTypeObject.schema,
+                );
+                // валидатор сохраняется под уникальным ключом
+                // для быстрого доступа во время проверки данных
                 const validator = ajv.compile({
                   type: OADataType.OBJECT,
-                  properties: {value: oaMediaTypeObject.schema},
-                  components: oaDocumentObject.components,
+                  properties: {value: safeOaSchema},
                 });
-                inst.setCompiledAjvValidator(validatorKey, validator);
+                inst._setCompiledAjvValidator(validatorKey, validator);
                 // если методом маршрута является GET,
                 // то добавляется дополнительный ключ
                 // для метода HEAD с тем же валидатором
@@ -584,7 +645,7 @@ export function onDefineRouteOpenApiHook(routeDef, container) {
                     '/' + index,
                     '/' + escapedMediaType,
                   ].join('');
-                  inst.setCompiledAjvValidator(
+                  inst._setCompiledAjvValidator(
                     validatorKeyForHeadMethod,
                     validator,
                   );
@@ -615,7 +676,7 @@ export function onDefineRouteOpenApiHook(routeDef, container) {
         // создание нового или извлечение существующего
         // экземпляра Ajv для компиляции валидаторов
         // тела запроса
-        const ajv = inst.getRequestBodyAjvInstance();
+        const ajv = inst._getRequestBodyAjvInstance();
         // requestBody.$ref
         if (oaRequestBodyObject.$ref !== undefined) {
           // следующая строка закомментирована, так как проверка
@@ -674,12 +735,20 @@ export function onDefineRouteOpenApiHook(routeDef, container) {
               '/requestBody',
               '/' + escapedMediaType,
             ].join('');
+            // перед компиляцией выполняется единоразовая
+            // регистрация зарегистрированных компонентов
+            // в экземпляре Ajv и конвертация ссылок $ref
+            inst._ensureComponentsRegistered(ajv, oaDocumentObject.components);
+            const safeOaSchema = inst._rewriteSchemaRefs(
+              oaMediaTypeObject.schema,
+            );
+            // валидатор сохраняется под уникальным ключом
+            // для быстрого доступа во время проверки данных
             const validator = ajv.compile({
               type: OADataType.OBJECT,
-              properties: {value: oaMediaTypeObject.schema},
-              components: oaDocumentObject.components,
+              properties: {value: safeOaSchema},
             });
-            inst.setCompiledAjvValidator(validatorKey, validator);
+            inst._setCompiledAjvValidator(validatorKey, validator);
             // если методом маршрута является GET,
             // то добавляется дополнительный ключ
             // для метода HEAD с тем же валидатором
@@ -691,7 +760,7 @@ export function onDefineRouteOpenApiHook(routeDef, container) {
                 '/requestBody',
                 '/' + escapedMediaType,
               ].join('');
-              inst.setCompiledAjvValidator(
+              inst._setCompiledAjvValidator(
                 validatorKeyForHeadMethod,
                 validator,
               );
@@ -725,7 +794,7 @@ export function onDefineRouteOpenApiHook(routeDef, container) {
         // создание нового или извлечение существующего
         // экземпляра Ajv для компиляции валидаторов
         // тела ответа
-        const ajv = inst.getResponseBodyAjvInstance();
+        const ajv = inst._getResponseBodyAjvInstance();
         // responses[statusCode]
         for (const oaStatusCodeKey of Object.keys(oaResponses)) {
           let oaResponseObject = oaResponses[oaStatusCodeKey];
@@ -804,12 +873,23 @@ export function onDefineRouteOpenApiHook(routeDef, container) {
                   '/' + oaStatusCodeKey,
                   '/' + escapedMediaType,
                 ].join('');
+                // перед компиляцией выполняется единоразовая
+                // регистрация зарегистрированных компонентов
+                // в экземпляре Ajv и конвертация ссылок $ref
+                inst._ensureComponentsRegistered(
+                  ajv,
+                  oaDocumentObject.components,
+                );
+                const safeOaSchema = inst._rewriteSchemaRefs(
+                  oaMediaTypeObject.schema,
+                );
+                // валидатор сохраняется под уникальным ключом
+                // для быстрого доступа во время проверки данных
                 const validator = ajv.compile({
                   type: OADataType.OBJECT,
-                  properties: {value: oaMediaTypeObject.schema},
-                  components: oaDocumentObject.components,
+                  properties: {value: safeOaSchema},
                 });
-                inst.setCompiledAjvValidator(validatorKey, validator);
+                inst._setCompiledAjvValidator(validatorKey, validator);
                 // если методом маршрута является GET,
                 // то добавляется дополнительный ключ
                 // для метода HEAD с тем же валидатором
@@ -822,7 +902,7 @@ export function onDefineRouteOpenApiHook(routeDef, container) {
                     '/' + oaStatusCodeKey,
                     '/' + escapedMediaType,
                   ].join('');
-                  inst.setCompiledAjvValidator(
+                  inst._setCompiledAjvValidator(
                     validatorKeyForHeadMethod,
                     validator,
                   );
@@ -876,7 +956,7 @@ export function requestValidationOpenApiHook(ctx) {
   // настроек расширения и валидаторов данных
   const inst = ctx.container.get(TrieRouterOpenApi);
   const builder = ctx.container.get(OADocumentBuilder);
-  const options = inst.getOptions();
+  const options = inst._options;
   const oaDocumentObject = builder.getDocumentObjectRef();
   // замена формата пути TrieRouter на OpenAPI
   // пример: "/users/:id" => "/users/{id}"
@@ -1016,7 +1096,7 @@ export function requestValidationOpenApiHook(ctx) {
         ].join('');
         // при неудачной проверке значения
         // параметра выбрасывается ошибка
-        const validate = inst.getCompiledAjvValidator(validatorKey);
+        const validate = inst._getCompiledAjvValidator(validatorKey);
         const valueContainer = {value: paramValue};
         const isValid = validate(valueContainer);
         if (!isValid) {
@@ -1124,7 +1204,7 @@ export function requestValidationOpenApiHook(ctx) {
             }
             // при неудачной проверке значения
             // параметра выбрасывается ошибка
-            const validate = inst.getCompiledAjvValidator(validatorKey);
+            const validate = inst._getCompiledAjvValidator(validatorKey);
             const valueContainer = {value: parsedValue};
             const isValid = validate(valueContainer);
             if (!isValid) {
@@ -1317,7 +1397,7 @@ export function requestValidationOpenApiHook(ctx) {
             ].join('');
             // при неудачной проверке тела
             // запроса выбрасывается ошибка
-            const validate = inst.getCompiledAjvValidator(validatorKey);
+            const validate = inst._getCompiledAjvValidator(validatorKey);
             const valueContainer = {value: ctx.body};
             const isValid = validate(valueContainer);
             if (!isValid) {
@@ -1377,7 +1457,7 @@ export function responseValidationOpenApiHook(ctx, data) {
   // настроек расширения и валидаторов данных
   const inst = ctx.container.get(TrieRouterOpenApi);
   const builder = ctx.container.get(OADocumentBuilder);
-  const options = inst.getOptions();
+  const options = inst._options;
   const oaDocumentObject = builder.getDocumentObjectRef();
   // замена формата пути TrieRouter на OpenAPI
   // пример: "/users/:id" => "/users/{id}"
@@ -1408,7 +1488,13 @@ export function responseValidationOpenApiHook(ctx, data) {
     // }
     // если определен пользовательский код ответа,
     // то выполняется поиск соответствующего определения
-    const responseStatusCode = ctx.response.statusCode;
+    let responseStatusCode = ctx.response.statusCode;
+    // если содержание ответа не определено, то согласно
+    // поведению маршрутизатора, код ответа принудительно
+    // устанавливается 204 No Content
+    if (data == null) {
+      responseStatusCode = 204;
+    }
     let oaStatusCodeKey;
     let oaResponseObject;
     // следующая строка закомментирована, так как проверка
@@ -1524,17 +1610,21 @@ export function responseValidationOpenApiHook(ctx, data) {
       // заголовок "content-type", предусмотрено автоматическое
       // определение на основе данных
       else if (data != null) {
-        switch (typeof data) {
-          case 'object':
-          case 'boolean':
-          case 'number':
-            responseMediaType = Buffer.isBuffer(data)
-              ? 'application/octet-stream'
-              : 'application/json';
-            break;
-          default:
-            responseMediaType = 'text/plain';
-            break;
+        if (isReadableStream(data)) {
+          responseMediaType = 'application/octet-stream';
+        } else {
+          switch (typeof data) {
+            case 'object':
+            case 'boolean':
+            case 'number':
+              responseMediaType = Buffer.isBuffer(data)
+                ? 'application/octet-stream'
+                : 'application/json';
+              break;
+            default:
+              responseMediaType = 'text/plain';
+              break;
+          }
         }
       }
       // если на данном этапе медиа-тип не определен, а данные
@@ -1599,7 +1689,7 @@ export function responseValidationOpenApiHook(ctx, data) {
             }
             // при неудачной проверке тела
             // ответа выбрасывается ошибка
-            const validate = inst.getCompiledAjvValidator(validatorKey);
+            const validate = inst._getCompiledAjvValidator(validatorKey);
             const valueContainer = {value: parsedValue};
             const isValid = validate(valueContainer);
             if (!isValid) {

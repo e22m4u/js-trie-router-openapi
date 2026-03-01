@@ -400,28 +400,13 @@ describe('TrieRouterOpenApi', function () {
     });
   });
 
-  describe('getOptions', function () {
-    it('should return an empty object when the options is not defined in constructor', function () {
-      const router = new TrieRouter();
-      const S = router.getService(TrieRouterOpenApi);
-      expect(S.getOptions()).to.be.eql({});
-    });
-
-    it('should return the options object defined in constructor', function () {
-      const router = new TrieRouter();
-      const options = {validateRequest: true, validateResponse: true};
-      const S = router.getService(TrieRouterOpenApi, options);
-      expect(S.getOptions()).to.be.eql(options);
-    });
-  });
-
-  describe('setCompiledAjvValidator', function () {
+  describe('_setCompiledAjvValidator', function () {
     it('should require the parameter "key" to be a non-empty String', function () {
       const validator = () => true;
       const throwable = v => () => {
         const router = new TrieRouter();
         const S = router.getService(TrieRouterOpenApi);
-        S.setCompiledAjvValidator(v, validator);
+        S._setCompiledAjvValidator(v, validator);
       };
       const error = s =>
         format(
@@ -444,7 +429,7 @@ describe('TrieRouterOpenApi', function () {
       const throwable = v => () => {
         const router = new TrieRouter();
         const S = router.getService(TrieRouterOpenApi);
-        S.setCompiledAjvValidator('key', v);
+        S._setCompiledAjvValidator('key', v);
       };
       const error = s =>
         format(
@@ -468,18 +453,18 @@ describe('TrieRouterOpenApi', function () {
       const router = new TrieRouter();
       const S = router.getService(TrieRouterOpenApi);
       const validator = () => true;
-      S.setCompiledAjvValidator('key', validator);
-      const res = S.getCompiledAjvValidator('key');
+      S._setCompiledAjvValidator('key', validator);
+      const res = S._getCompiledAjvValidator('key');
       expect(res).to.be.eq(validator);
     });
   });
 
-  describe('hasCompiledAjvValidator', function () {
+  describe('_hasCompiledAjvValidator', function () {
     it('should require the parameter "key" to be a non-empty String', function () {
       const throwable = v => () => {
         const router = new TrieRouter();
         const S = router.getService(TrieRouterOpenApi);
-        S.hasCompiledAjvValidator(v);
+        S._hasCompiledAjvValidator(v);
       };
       const error = s =>
         format(
@@ -502,23 +487,23 @@ describe('TrieRouterOpenApi', function () {
       const router = new TrieRouter();
       const S = router.getService(TrieRouterOpenApi);
       const validator = () => true;
-      const res1 = S.hasCompiledAjvValidator('key');
+      const res1 = S._hasCompiledAjvValidator('key');
       expect(res1).to.be.false;
-      S.setCompiledAjvValidator('key', validator);
-      const res2 = S.hasCompiledAjvValidator('key');
+      S._setCompiledAjvValidator('key', validator);
+      const res2 = S._hasCompiledAjvValidator('key');
       expect(res2).to.be.true;
     });
   });
 
-  describe('getCompiledAjvValidator', function () {
+  describe('_getCompiledAjvValidator', function () {
     it('should require the parameter "key" to be a non-empty String', function () {
       const throwable = v => () => {
         const router = new TrieRouter();
         const S = router.getService(TrieRouterOpenApi);
         if (v && typeof v === 'string') {
-          S.setCompiledAjvValidator(v, () => true);
+          S._setCompiledAjvValidator(v, () => true);
         }
-        S.getCompiledAjvValidator(v);
+        S._getCompiledAjvValidator(v);
       };
       const error = s =>
         format(
@@ -540,7 +525,7 @@ describe('TrieRouterOpenApi', function () {
     it('should throw an error when the given key is not registered', function () {
       const router = new TrieRouter();
       const S = router.getService(TrieRouterOpenApi);
-      const throwable = () => S.getCompiledAjvValidator('key');
+      const throwable = () => S._getCompiledAjvValidator('key');
       expect(throwable).to.throw('Ajv validator "key" does not exist.');
     });
 
@@ -548,40 +533,40 @@ describe('TrieRouterOpenApi', function () {
       const router = new TrieRouter();
       const S = router.getService(TrieRouterOpenApi);
       const validator = () => true;
-      S.setCompiledAjvValidator('key', validator);
-      const res = S.getCompiledAjvValidator('key');
+      S._setCompiledAjvValidator('key', validator);
+      const res = S._getCompiledAjvValidator('key');
       expect(res).to.be.eq(validator);
     });
   });
 
-  describe('getParametersAjvInstance', function () {
+  describe('_getParametersAjvInstance', function () {
     it('should return always the same instance of Ajv2020', function () {
       const router = new TrieRouter();
       const S = router.getService(TrieRouterOpenApi);
-      const res1 = S.getParametersAjvInstance();
-      const res2 = S.getParametersAjvInstance();
+      const res1 = S._getParametersAjvInstance();
+      const res2 = S._getParametersAjvInstance();
       expect(res1).to.be.instanceOf(Ajv2020);
       expect(res1).to.be.eq(res2);
     });
   });
 
-  describe('getRequestBodyAjvInstance', function () {
+  describe('_getRequestBodyAjvInstance', function () {
     it('should return always the same instance of Ajv2020', function () {
       const router = new TrieRouter();
       const S = router.getService(TrieRouterOpenApi);
-      const res1 = S.getRequestBodyAjvInstance();
-      const res2 = S.getRequestBodyAjvInstance();
+      const res1 = S._getRequestBodyAjvInstance();
+      const res2 = S._getRequestBodyAjvInstance();
       expect(res1).to.be.instanceOf(Ajv2020);
       expect(res1).to.be.eq(res2);
     });
   });
 
-  describe('getResponseBodyAjvInstance', function () {
+  describe('_getResponseBodyAjvInstance', function () {
     it('should return always the same instance of Ajv2020', function () {
       const router = new TrieRouter();
       const S = router.getService(TrieRouterOpenApi);
-      const res1 = S.getResponseBodyAjvInstance();
-      const res2 = S.getResponseBodyAjvInstance();
+      const res1 = S._getResponseBodyAjvInstance();
+      const res2 = S._getResponseBodyAjvInstance();
       expect(res1).to.be.instanceOf(Ajv2020);
       expect(res1).to.be.eq(res2);
     });
@@ -1305,7 +1290,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/parameters/0',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.true;
         });
       });
@@ -1336,7 +1321,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/parameters/0',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.true;
         });
       });
@@ -1371,7 +1356,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/parameters/0/application~1json',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.true;
         });
       });
@@ -1406,7 +1391,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/parameters/0/application~1json',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.true;
         });
       });
@@ -1440,7 +1425,7 @@ describe('TrieRouterOpenApi', function () {
           '/post/~1path/requestBody/text~1plain',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.true;
         });
       });
@@ -1476,7 +1461,7 @@ describe('TrieRouterOpenApi', function () {
           '/post/~1path/requestBody/text~1plain',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.true;
         });
       });
@@ -1513,7 +1498,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/parameters/0/application~1octet-stream',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.false;
         });
       });
@@ -1550,7 +1535,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/parameters/0/multipart~1form-data',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.false;
         });
       });
@@ -1578,7 +1563,7 @@ describe('TrieRouterOpenApi', function () {
             return 'OK';
           },
         });
-        const res = S.hasCompiledAjvValidator(
+        const res = S._hasCompiledAjvValidator(
           '/post/~1path/requestBody/application~1octet-stream',
         );
         expect(res).to.be.false;
@@ -1607,7 +1592,7 @@ describe('TrieRouterOpenApi', function () {
             return 'OK';
           },
         });
-        const res = S.hasCompiledAjvValidator(
+        const res = S._hasCompiledAjvValidator(
           '/post/~1path/requestBody/multipart~1form-data',
         );
         expect(res).to.be.false;
@@ -1662,7 +1647,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/responses/default/text~1plain',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.false;
         });
       });
@@ -1721,7 +1706,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/responses/default/text~1plain',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.false;
         });
       });
@@ -1779,7 +1764,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/responses/default/text~1plain',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.true;
         });
       });
@@ -1838,7 +1823,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/responses/default/text~1plain',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.true;
         });
       });
@@ -1884,7 +1869,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/responses/default/application~1octet-stream',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.false;
         });
       });
@@ -1930,7 +1915,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/responses/default/multipart~1form-data',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.false;
         });
       });
@@ -1963,7 +1948,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/parameters/0',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.false;
         });
       });
@@ -1996,7 +1981,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/parameters/0',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.false;
         });
       });
@@ -2033,7 +2018,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/parameters/0/application~1json',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.false;
         });
       });
@@ -2070,7 +2055,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/parameters/0/application~1json',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.false;
         });
       });
@@ -2106,7 +2091,7 @@ describe('TrieRouterOpenApi', function () {
           '/post/~1path/requestBody/text~1plain',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.false;
         });
       });
@@ -2144,7 +2129,7 @@ describe('TrieRouterOpenApi', function () {
           '/post/~1path/requestBody/text~1plain',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.false;
         });
       });
@@ -2180,7 +2165,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/parameters/0',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.true;
         });
       });
@@ -2214,7 +2199,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/parameters/0',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.true;
         });
       });
@@ -2252,7 +2237,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/parameters/0/application~1json',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.true;
         });
       });
@@ -2290,7 +2275,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/parameters/0/application~1json',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.true;
         });
       });
@@ -2327,7 +2312,7 @@ describe('TrieRouterOpenApi', function () {
           '/post/~1path/requestBody/text~1plain',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.true;
         });
       });
@@ -2366,7 +2351,7 @@ describe('TrieRouterOpenApi', function () {
           '/post/~1path/requestBody/text~1plain',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.true;
         });
       });
@@ -2423,7 +2408,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/responses/default/text~1plain',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.true;
         });
       });
@@ -2483,7 +2468,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/responses/default/text~1plain',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.true;
         });
       });
@@ -2521,7 +2506,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/parameters/0/application~1octet-stream',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.false;
         });
       });
@@ -2559,7 +2544,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/parameters/0/multipart~1form-data',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.false;
         });
       });
@@ -2588,7 +2573,7 @@ describe('TrieRouterOpenApi', function () {
             return 'OK';
           },
         });
-        const res = S.hasCompiledAjvValidator(
+        const res = S._hasCompiledAjvValidator(
           '/post/~1path/requestBody/application~1octet-stream',
         );
         expect(res).to.be.false;
@@ -2618,7 +2603,7 @@ describe('TrieRouterOpenApi', function () {
             return 'OK';
           },
         });
-        const res = S.hasCompiledAjvValidator(
+        const res = S._hasCompiledAjvValidator(
           '/post/~1path/requestBody/multipart~1form-data',
         );
         expect(res).to.be.false;
@@ -2665,7 +2650,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/responses/default/application~1octet-stream',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.false;
         });
       });
@@ -2711,7 +2696,7 @@ describe('TrieRouterOpenApi', function () {
           '/head/~1path/responses/default/multipart~1form-data',
         ];
         validatorKeys.forEach(key => {
-          const res = S.hasCompiledAjvValidator(key);
+          const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.false;
         });
       });
@@ -6488,6 +6473,66 @@ describe('TrieRouterOpenApi', function () {
     });
 
     describe('when the option "validateResponse" is true', function () {
+      describe('validation against "/meta/openApi/responses/{statusCode}"', function () {
+        it('should allow specify 204 No Content when the route handler returns undefined', async function () {
+          const router = new TrieRouter();
+          router.useService(TrieRouterOpenApi, {validateResponse: true});
+          const request = createRequestMock({
+            method: HttpMethod.GET,
+            path: '/',
+          });
+          const response = createResponseMock();
+          router.defineRoute({
+            method: HttpMethod.GET,
+            path: '/',
+            meta: {
+              openApi: {
+                responses: {
+                  204: {
+                    description: 'No Content',
+                  },
+                },
+              },
+            },
+            handler() {
+              return undefined;
+            },
+          });
+          router.requestListener(request, response);
+          const res = await response.getBody();
+          expect(res).to.be.undefined;
+        });
+
+        it('should allow specify 204 No Content when the route handler returns null', async function () {
+          const router = new TrieRouter();
+          router.useService(TrieRouterOpenApi, {validateResponse: true});
+          const request = createRequestMock({
+            method: HttpMethod.GET,
+            path: '/',
+          });
+          const response = createResponseMock();
+          router.defineRoute({
+            method: HttpMethod.GET,
+            path: '/',
+            meta: {
+              openApi: {
+                responses: {
+                  204: {
+                    description: 'No Content',
+                  },
+                },
+              },
+            },
+            handler() {
+              return undefined;
+            },
+          });
+          router.requestListener(request, response);
+          const res = await response.getBody();
+          expect(res).to.be.undefined;
+        });
+      });
+
       describe('validation against "/meta/openApi/responses/{statusCode}/content/{mediaType}/schema"', function () {
         it('should pass validation for the response body', async function () {
           const router = new TrieRouter();
