@@ -252,6 +252,21 @@ router.useService(TrieRouterOpenApi, {
 расширения. Сюда передаются корневые настройки спецификации, список серверов,
 глобальные требования безопасности и заранее подготовленные компоненты.
 
+```js
+router.useService(TrieRouterOpenApi, {
+  document: {
+    info: {
+      title: 'My Custom API',
+      version: '1.2.0',
+      description: 'API for managing users and posts',
+    },
+    servers: [
+      {url: 'https://api.example.com/v1'},
+    ],
+  },
+});
+```
+
 #### validateRequest
 
 Тип: `boolean`  
@@ -261,6 +276,35 @@ router.useService(TrieRouterOpenApi, {
 соответствие описанной OpenAPI схеме. В случае ошибки возвращает ответ
 *400 BadRequest*.
 
+```js
+router.useService(TrieRouterOpenApi, {
+  validateRequest: true,
+});
+
+router.defineRoute({
+  method: HttpMethod.GET,
+  path: '/items',
+  meta: {
+    openApi: {
+      parameters: [{
+        name: 'sort',
+        in: OAParameterLocation.QUERY,
+        schema: { 
+          type: OADataType.STRING, 
+          enum: ['asc', 'desc'], // только два конкретных значения
+        },
+      }],
+    },
+  },
+  handler(ctx) { /* ... */ },
+});
+
+// если клиент отправит GET /items?sort=invalid
+// маршрутизатор прервет запрос и вернет ошибку:
+// 400 Bad Request:
+// Value at "/request/query/sort" must be equal to one of the allowed values.
+```
+
 #### validateResponse
 
 Тип: `boolean`  
@@ -269,6 +313,37 @@ router.useService(TrieRouterOpenApi, {
 Включает автоматическую проверку исходящих данных, возвращаемых из обработчика
 маршрута, на соответствие OpenAPI схеме. В случае ошибки возвращает ответ
 *500 InternalServerError*.
+
+```js
+router.useService(TrieRouterOpenApi, {
+  validateResponse: true,
+});
+
+router.defineRoute({
+  method: HttpMethod.GET,
+  path: '/count',
+  meta: {
+    openApi: {
+      responses: {
+        200: {
+          description: 'Total count',
+          content: {
+            [OAMediaType.APPLICATION_JSON]: {
+              schema: {type: OADataType.NUMBER},
+            },
+          },
+        },
+      },
+    },
+  },
+  handler() {
+    return "10"; 
+    // так как схема ожидает число, но возвращается строка,
+    // маршрутизатор автоматически перехватит ответ
+    // и вернет клиенту 500 Internal Server Error
+  }
+});
+```
 
 #### parseRequestParameterContent
 
@@ -280,6 +355,36 @@ router.useService(TrieRouterOpenApi, {
 объект `content`. При успешном разборе значение параметра подменяется
 в контексте запроса, а при неудаче выбрасывается ошибка.
 
+```js
+router.useService(TrieRouterOpenApi, {
+  validateRequest: true,
+  parseRequestParameterContent: true,
+});
+
+router.defineRoute({
+  method: HttpMethod.GET,
+  path: '/search',
+  meta: {
+    openApi: {
+      parameters: [{
+        name: 'filter',
+        in: OAParameterLocation.QUERY,
+        content: {
+          [OAMediaType.APPLICATION_JSON]: {
+            schema: {type: OADataType.OBJECT},
+          },
+        },
+      }],
+    },
+  },
+  handler(ctx) {
+    // при запросе GET /search?filter={"active":true}
+    // строка автоматически приводится к объекту
+    console.log(ctx.query.filter); // {active: true}
+  },
+});
+```
+
 #### coerceRequestParameterDataType
 
 Тип: `boolean`  
@@ -289,6 +394,34 @@ router.useService(TrieRouterOpenApi, {
 Включает приведение типов для параметров запроса в соответствии с их схемой.
 Например, строковое значение `"10"` будет преобразовано в число `10`.
 Преобразованные значения заменяют исходные данные в контексте запроса.
+
+```js
+router.useService(TrieRouterOpenApi, {
+  validateRequest: true,
+  coerceRequestParameterDataType: true,
+});
+
+router.defineRoute({
+  method: HttpMethod.GET,
+  path: '/users/:id',
+  meta: {
+    openApi: {
+      parameters: [{
+        name: 'id',
+        in: OAParameterLocation.PATH,
+        schema: {type: OADataType.NUMBER},
+      }],
+    },
+  },
+  handler(ctx) {
+    // при запросе GET /users/123
+    // без данной опции, значение параметра ctx.params.id
+    // было бы строкой "123", но с включенной опцией значение
+    // приводится к числу согласно указанному типу
+    console.log(typeof ctx.params.id); // "number"
+  }
+});
+```
 
 #### coerceRequestBodyDataType
 
@@ -300,6 +433,39 @@ router.useService(TrieRouterOpenApi, {
 входящего тела запроса. Полезно, если клиент присылает данные в свободном
 формате (например, числа в виде строк).
 
+```js
+router.useService(TrieRouterOpenApi, {
+  validateRequest: true,
+  coerceRequestBodyDataType: true,
+});
+
+router.defineRoute({
+  method: HttpMethod.POST,
+  path: '/items',
+  meta: {
+    openApi: {
+      requestBody: {
+        content: {
+          [OAMediaType.APPLICATION_JSON]: {
+            schema: {
+              type: OADataType.OBJECT,
+              properties: {
+                count: {type: OADataType.NUMBER},
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  handler(ctx) {
+    // если клиент пришлет JSON {"count": "42"},
+    // значение "42" (строка) станет числом 42
+    console.log(typeof ctx.body.count); // "number"
+  }
+});
+```
+
 #### coerceResponseBodyDataType
 
 Тип: `boolean`  
@@ -309,6 +475,43 @@ router.useService(TrieRouterOpenApi, {
 Включает автоматическое приведение типов данных в теле ответа (которое
 возвращает обработчик маршрута) к типам, указанным в схеме ответа,
 перед отправкой данных клиенту.
+
+```js
+router.useService(TrieRouterOpenApi, {
+  validateResponse: true,
+  coerceResponseBodyDataType: true,
+});
+
+router.defineRoute({
+  method: HttpMethod.GET,
+  path: '/stats',
+  meta: {
+    openApi: {
+      responses: {
+        200: {
+          description: 'Stats',
+          content: {
+            [OAMediaType.APPLICATION_JSON]: {
+              schema: {
+                type: OADataType.OBJECT,
+                properties: {
+                  total: {type: OADataType.NUMBER},
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  handler: () => {
+    // обработчик возвращает значение свойства как строку
+    return {total: "150"};
+    // перед отправкой клиенту строка "150" будет
+    // автоматически приведена к числу 150 согласно схеме
+  }
+});
+```
 
 #### removeAdditionalRequestData
 
@@ -320,6 +523,41 @@ router.useService(TrieRouterOpenApi, {
 в схеме. Чтобы опция работала для объектов, в их схеме должно быть явно
 указано `additionalProperties: false`.
 
+```js
+router.useService(TrieRouterOpenApi, {
+  validateRequest: true,
+  removeAdditionalRequestData: true,
+});
+
+router.defineRoute({
+  method: HttpMethod.POST,
+  path: '/login',
+  meta: {
+    openApi: {
+      requestBody: {
+        content: {
+          [OAMediaType.APPLICATION_JSON]: {
+            schema: {
+              type: OADataType.OBJECT,
+              properties: {
+                username: {type: OADataType.STRING},
+              },
+              additionalProperties: false, // обязательное условие
+            },
+          },
+        },
+      },
+    },
+  },
+  handler(ctx) {
+    // если клиент отправит {"username": "admin", "role": "root"},
+    // поле "role" будет вырезано до входа в обработчик, так как
+    // схема объекта исключает дополнительные поля
+    console.log(ctx.body); // {username: "admin"}
+  },
+});
+```
+
 #### removeAdditionalResponseData
 
 Тип: `boolean`  
@@ -329,6 +567,44 @@ router.useService(TrieRouterOpenApi, {
 Удаляет из тела ответа все поля, которые явно не описаны в схеме. Чтобы
 опция работала для объектов, в их схеме должно быть явно указано
 `additionalProperties: false`.
+
+```js
+router.useService(TrieRouterOpenApi, {
+  validateResponse: true,
+  removeAdditionalResponseData: true,
+});
+
+router.defineRoute({
+  method: HttpMethod.GET,
+  path: '/profile',
+  meta: {
+    openApi: {
+      responses: {
+        200: {
+          description: 'Profile data',
+          content: {
+            [OAMediaType.APPLICATION_JSON]: {
+              schema: {
+                type: OADataType.OBJECT,
+                properties: {
+                  username: {type: OADataType.STRING},
+                },
+                additionalProperties: false, // обязательное условие
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  handler() {
+    // обработчик может извлекать из базы чувствительные данные
+    return {username: "admin", passwordHash: "secret123"};
+    // клиент получит только {"username": "admin"},
+    // поле "passwordHash" автоматически удаляется
+  },
+});
+```
 
 #### useDefaultValuesInRequestParameters
 
@@ -340,6 +616,35 @@ router.useService(TrieRouterOpenApi, {
 слово `default` в схеме параметров запроса. Добавленные значения будут
 доступны в контексте запроса.
 
+```js
+router.useService(TrieRouterOpenApi, {
+  validateRequest: true,
+  useDefaultValuesInRequestParameters: true,
+});
+
+router.defineRoute({
+  method: HttpMethod.GET,
+  path: '/items',
+  meta: {
+    openApi: {
+      parameters: [{
+        name: 'limit',
+        in: OAParameterLocation.QUERY,
+        schema: {
+          type: OADataType.NUMBER,
+          default: 20,
+        },
+      }],
+    },
+  },
+  handler(ctx) {
+    // при запросе GET /items (без передачи ?limit=...)
+    // значение по умолчанию подставится автоматически
+    console.log(ctx.query.limit); // 20
+  },
+});
+```
+
 #### useDefaultValuesInRequestBody
 
 Тип: `boolean`  
@@ -349,6 +654,40 @@ router.useService(TrieRouterOpenApi, {
 Автоматически заполняет отсутствующие поля во входящем теле запроса значениями
 по умолчанию, описанными в схеме с помощью ключевого слова `default`.
 
+```js
+router.useService(TrieRouterOpenApi, {
+  validateRequest: true,
+  useDefaultValuesInRequestBody: true,
+});
+
+router.defineRoute({
+  method: HttpMethod.POST,
+  path: '/users',
+  meta: {
+    openApi: {
+      requestBody: {
+        content: {
+          [OAMediaType.APPLICATION_JSON]: {
+            schema: {
+              type: OADataType.OBJECT,
+              properties: {
+                name: {type: OADataType.STRING},
+                active: {type: OADataType.BOOLEAN, default: true},
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  handler: (ctx) => {
+    // если клиент отправит лишь {"name": "John"},
+    // свойство "active" получит значение по умолчанию
+    console.log(ctx.body); // {name: "John", active: true}
+  },
+});
+```
+
 #### useDefaultValuesInResponseBody
 
 Тип: `boolean`  
@@ -357,6 +696,44 @@ router.useService(TrieRouterOpenApi, {
 
 Автоматически добавляет отсутствующие свойства в возвращаемый объект ответа,
 используя значения по умолчанию, указанные в ключевом слове `default` схемы.
+
+```js
+router.useService(TrieRouterOpenApi, {
+  validateResponse: true,
+  useDefaultValuesInResponseBody: true,
+});
+
+router.defineRoute({
+  method: HttpMethod.GET,
+  path: '/data',
+  meta: {
+    openApi: {
+      responses: {
+        200: {
+          description: 'Data response',
+          content: {
+            [OAMediaType.APPLICATION_JSON]: {
+              schema: {
+                type: OADataType.OBJECT,
+                properties: {
+                  items: {type: OADataType.ARRAY},
+                  status: {type: OADataType.STRING, default: "success"},
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  handler() {
+    // обработчик возвращает неполный объект
+    return {items: [1, 2, 3]};
+    // клиент в итоге получит:
+    // {"items": [1, 2, 3], "status": "success"}
+  },
+});
+```
 
 ## Тесты
 
