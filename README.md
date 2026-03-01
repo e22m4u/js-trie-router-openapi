@@ -224,40 +224,129 @@ router.useService(TrieRouterOpenApi, {
   },
   validateRequest: false,
   validateResponse: false,
-  // параметры, требующие validateRequest: true
-  parseRequestParameterContent: false,
-  coerceRequestParameterDataType: false,
-  coerceRequestBodyDataType: false,
-  removeAdditionalRequestData: false,
-  useDefaultValuesInRequestParameters: false,
-  useDefaultValuesInRequestBody: false,
-  // параметры, требующие validateResponse: true
-  coerceResponseBodyDataType: false,
-  removeAdditionalResponseData: false,
-  useDefaultValuesInResponseBody: false,
+  // ...
 });
 ```
 
+Доступные параметры:
+
+- [validateRequest](#validaterequest)
+- [validateResponse](#validateresponse)
+- [parseRequestParameterContent](#parserequestparametercontent)
+- [coerceRequestParameterDataType](#coercerequestparameterdatatype)
+- [coerceRequestBodyDataType](#coercerequestbodydatatype)
+- [coerceResponseBodyDataType](#coerceresponsebodydatatype)
+- [removeAdditionalRequestData](#removeadditionalrequestdata)
+- [removeAdditionalResponseData](#removeadditionalresponsedata)
+- [useDefaultValuesInRequestParameters](#usedefaultvaluesinrequestparameters)
+- [useDefaultValuesInRequestBody](#usedefaultvaluesinrequestbody)
+- [useDefaultValuesInResponseBody](#usedefaultvaluesinresponsebody)
+
 #### validateRequest
 
-Тип: `boolean`.
-По умолчанию `false`.
+Тип: `boolean`  
+По умолчанию `false`  
 
 Включает автоматическую проверку входящих параметров и тела запроса на
 соответствие описанной OpenAPI схеме. В случае ошибки возвращает ответ
 *400 BadRequest*.
 
-- Проверяет данные согласно схеме.
-- Приводит типы параметров запроса.
-
 #### validateResponse
 
-Тип: `boolean`.
-По умолчанию `false`.
+Тип: `boolean`  
+По умолчанию `false`  
 
 Включает автоматическую проверку исходящих данных, возвращаемых из обработчика
 маршрута, на соответствие OpenAPI схеме. В случае ошибки возвращает ответ
 *500 InternalServerError*.
+
+#### parseRequestParameterContent
+
+Тип: `boolean`  
+По умолчанию `false`  
+*Требует включенной опции `validateRequest: true`*
+
+Включает автоматический парсинг параметров запроса, если они описаны через
+объект `content`. При успешном разборе значение параметра подменяется
+в контексте запроса, а при неудаче выбрасывается ошибка.
+
+#### coerceRequestParameterDataType
+
+Тип: `boolean`  
+По умолчанию `false`  
+*Требует включенной опции `validateRequest: true`*
+
+Включает приведение типов для параметров запроса в соответствии с их схемой.
+Например, строковое значение `"10"` будет преобразовано в число `10`.
+Преобразованные значения заменяют исходные данные в контексте запроса.
+
+#### coerceRequestBodyDataType
+
+Тип: `boolean`  
+По умолчанию `false`  
+*Требует включенной опции `validateRequest: true`*
+
+Включает приведение типов для полей объекта и элементов массива внутри
+входящего тела запроса. Полезно, если клиент присылает данные в свободном
+формате (например, числа в виде строк).
+
+#### coerceResponseBodyDataType
+
+Тип: `boolean`  
+По умолчанию `false`  
+*Требует включенной опции `validateResponse: true`*
+
+Включает автоматическое приведение типов данных в теле ответа (которое
+возвращает обработчик маршрута) к типам, указанным в схеме ответа,
+перед отправкой данных клиенту.
+
+#### removeAdditionalRequestData
+
+Тип: `boolean`  
+По умолчанию `false`  
+*Требует включенной опции `validateRequest: true`*
+
+Удаляет из параметров и тела запроса все свойства, которые явно не описаны
+в схеме. Чтобы опция работала для объектов, в их схеме должно быть явно
+указано `additionalProperties: false`.
+
+#### removeAdditionalResponseData
+
+Тип: `boolean`  
+По умолчанию `false`  
+*Требует включенной опции `validateResponse: true`*
+
+Удаляет из тела ответа все поля, которые явно не описаны в схеме. Чтобы
+опция работала для объектов, в их схеме должно быть явно указано
+`additionalProperties: false`.
+
+#### useDefaultValuesInRequestParameters
+
+Тип: `boolean`  
+По умолчанию `false`  
+*Требует включенной опции `validateRequest: true`*
+
+Автоматически подставляет значения по умолчанию, указанные через ключевое
+слово `default` в схеме параметров запроса. Добавленные значения будут
+доступны в контексте запроса.
+
+#### useDefaultValuesInRequestBody
+
+Тип: `boolean`  
+По умолчанию `false`  
+*Требует включенной опции `validateRequest: true`*
+
+Автоматически заполняет отсутствующие поля во входящем теле запроса значениями
+по умолчанию, описанными в схеме с помощью ключевого слова `default`.
+
+#### useDefaultValuesInResponseBody
+
+Тип: `boolean`  
+По умолчанию `false`  
+*Требует включенной опции `validateResponse: true`*
+
+Автоматически добавляет отсутствующие свойства в возвращаемый объект ответа,
+используя значения по умолчанию, указанные в ключевом слове `default` схемы.
 
 ## Тесты
 
