@@ -215,7 +215,7 @@ import {TrieRouterOpenApi} from '@e22m4u/js-trie-router-openapi';
 const router = new TrieRouter();
 
 router.useService(TrieRouterOpenApi, {
-  // основные параметры:
+  // параметры:
   document: {
     info: {
       title: 'API Documentation',
