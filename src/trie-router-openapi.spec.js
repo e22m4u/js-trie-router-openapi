@@ -21,6 +21,7 @@ import {
 
 import {
   TrieRouterOpenApi,
+  OA_COMPONENTS_AJV_ID,
   onDefineRouteOpenApiHook,
   requestValidationOpenApiHook,
   responseValidationOpenApiHook,
@@ -569,6 +570,193 @@ describe('TrieRouterOpenApi', function () {
       const res2 = S._getResponseBodyAjvInstance();
       expect(res1).to.be.instanceOf(Ajv2020);
       expect(res1).to.be.eq(res2);
+    });
+  });
+
+  describe('_ensureComponentsRegistered', function () {
+    it('should do nothing if components are not provided', function () {
+      let addSchemaCalled = false;
+      const ajvMock = {
+        getSchema: () => false,
+        addSchema: () => {
+          addSchemaCalled = true;
+        },
+      };
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      S._ensureComponentsRegistered(ajvMock, undefined);
+      expect(addSchemaCalled).to.be.false;
+    });
+
+    it('should register components schema if it does not exist', function () {
+      let registeredSchema = null;
+      const ajvMock = {
+        getSchema: () => false,
+        addSchema: schema => {
+          registeredSchema = schema;
+        },
+      };
+      const components = {schemas: {test: {}}};
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      S._ensureComponentsRegistered(ajvMock, components);
+      expect(registeredSchema).to.be.eql({
+        $id: OA_COMPONENTS_AJV_ID,
+        components: components,
+      });
+    });
+
+    it('should not register components schema if it already exists', function () {
+      let addSchemaCalled = false;
+      const ajvMock = {
+        getSchema: id => id === OA_COMPONENTS_AJV_ID,
+        addSchema: () => {
+          addSchemaCalled = true;
+        },
+      };
+      const components = {schemas: {test: {}}};
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      S._ensureComponentsRegistered(ajvMock, components);
+      expect(addSchemaCalled).to.be.false;
+    });
+  });
+
+  describe('_rewriteSchemaRefs', function () {
+    it('should return the input as is if it is null or undefined', function () {
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      expect(S._rewriteSchemaRefs(null)).to.be.null;
+      expect(S._rewriteSchemaRefs(undefined)).to.be.undefined;
+    });
+
+    it('should return primitive values as is', function () {
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      expect(S._rewriteSchemaRefs(true)).to.be.eq(true);
+      expect(S._rewriteSchemaRefs(123)).to.be.eq(123);
+      expect(S._rewriteSchemaRefs('string')).to.be.eq('string');
+    });
+
+    it('should return an empty object if the input is an empty object', function () {
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      const res = S._rewriteSchemaRefs({});
+      expect(res).to.be.eql({});
+    });
+
+    it('should return an empty array if the input is an empty array', function () {
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      const res = S._rewriteSchemaRefs([]);
+      expect(res).to.be.eql([]);
+    });
+
+    it('should rewrite a top-level $ref starting with "#/components/"', function () {
+      const schema = {$ref: '#/components/schemas/user'};
+      const expected = {
+        $ref: `${OA_COMPONENTS_AJV_ID}#/components/schemas/user`,
+      };
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      const res = S._rewriteSchemaRefs(schema);
+      expect(res).to.be.eql(expected);
+    });
+
+    it('should not rewrite a $ref that does not start with "#/components/"', function () {
+      const schema = {$ref: '#/definitions/user'};
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      const res = S._rewriteSchemaRefs(schema);
+      expect(res).to.be.eql(schema);
+    });
+
+    it('should not rewrite a $ref that is not a string', function () {
+      const schema = {$ref: {some: 'object'}};
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      const res = S._rewriteSchemaRefs(schema);
+      expect(res).to.be.eql(schema);
+    });
+
+    it('should recursively rewrite $ref nested within properties', function () {
+      const schema = {
+        type: OADataType.OBJECT,
+        properties: {
+          user: {$ref: '#/components/schemas/user'},
+          role: {$ref: '#/components/schemas/role'},
+        },
+      };
+      const expected = {
+        type: OADataType.OBJECT,
+        properties: {
+          user: {$ref: `${OA_COMPONENTS_AJV_ID}#/components/schemas/user`},
+          role: {$ref: `${OA_COMPONENTS_AJV_ID}#/components/schemas/role`},
+        },
+      };
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      const res = S._rewriteSchemaRefs(schema);
+      expect(res).to.be.eql(expected);
+    });
+
+    it('should recursively rewrite $ref nested within arrays', function () {
+      const schema = [
+        {$ref: '#/components/schemas/item1'},
+        {other: 'value'},
+        {$ref: '#/components/schemas/item2'},
+      ];
+      const expected = [
+        {$ref: `${OA_COMPONENTS_AJV_ID}#/components/schemas/item1`},
+        {other: 'value'},
+        {$ref: `${OA_COMPONENTS_AJV_ID}#/components/schemas/item2`},
+      ];
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      const res = S._rewriteSchemaRefs(schema);
+      expect(res).to.be.eql(expected);
+    });
+
+    it('should recursively rewrite $ref deeply nested in mixed structures', function () {
+      const schema = {
+        type: OADataType.OBJECT,
+        oneOf: [
+          {$ref: '#/components/schemas/a'},
+          {
+            type: OADataType.ARRAY,
+            items: {$ref: '#/components/schemas/b'},
+          },
+        ],
+      };
+      const expected = {
+        type: OADataType.OBJECT,
+        oneOf: [
+          {$ref: `${OA_COMPONENTS_AJV_ID}#/components/schemas/a`},
+          {
+            type: OADataType.ARRAY,
+            items: {$ref: `${OA_COMPONENTS_AJV_ID}#/components/schemas/b`},
+          },
+        ],
+      };
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      const res = S._rewriteSchemaRefs(schema);
+      expect(res).to.be.eql(expected);
+    });
+
+    it('should preserve other properties while rewriting', function () {
+      const schema = {
+        $ref: '#/components/schemas/user',
+        description: 'A user reference',
+      };
+      const expected = {
+        $ref: `${OA_COMPONENTS_AJV_ID}#/components/schemas/user`,
+        description: 'A user reference',
+      };
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      const res = S._rewriteSchemaRefs(schema);
+      expect(res).to.be.eql(expected);
     });
   });
 

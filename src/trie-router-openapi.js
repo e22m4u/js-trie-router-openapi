@@ -54,7 +54,7 @@ const NOT_VALIDABLE_MEDIA_TYPES = [
 /**
  * Components ajv id.
  */
-const OA_COMPONENTS_AJV_ID = 'OAComponents';
+export const OA_COMPONENTS_AJV_ID = 'OAComponents';
 
 /**
  * Trie router OpenAPI.
