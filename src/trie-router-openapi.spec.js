@@ -1655,7 +1655,9 @@ describe('TrieRouterOpenApi', function () {
       });
 
       it('should ignore the media type "application/octet-stream" in "/parameters/{n}/content"', function () {
-        const router = new TrieRouter();
+        const router = new TrieRouter({
+          ignoredMediaTypes: [OAMediaType.APPLICATION_OCTET_STREAM],
+        });
         const S = router.getService(TrieRouterOpenApi, {
           validateRequest: true,
         });
@@ -1692,7 +1694,9 @@ describe('TrieRouterOpenApi', function () {
       });
 
       it('should ignore the media type "multipart/form-data" in "/parameters/{n}/content"', function () {
-        const router = new TrieRouter();
+        const router = new TrieRouter({
+          ignoredMediaTypes: [OAMediaType.MULTIPART_FORM_DATA],
+        });
         const S = router.getService(TrieRouterOpenApi, {
           validateRequest: true,
         });
@@ -1729,7 +1733,9 @@ describe('TrieRouterOpenApi', function () {
       });
 
       it('should ignore the media type "application/octet-stream" in "/requestBody/content"', function () {
-        const router = new TrieRouter();
+        const router = new TrieRouter({
+          ignoredMediaTypes: [OAMediaType.APPLICATION_OCTET_STREAM],
+        });
         const S = router.getService(TrieRouterOpenApi, {
           validateRequest: true,
         });
@@ -1758,7 +1764,9 @@ describe('TrieRouterOpenApi', function () {
       });
 
       it('should ignore the media type "multipart/form-data" in "/requestBody/content"', function () {
-        const router = new TrieRouter();
+        const router = new TrieRouter({
+          ignoredMediaTypes: [OAMediaType.MULTIPART_FORM_DATA],
+        });
         const S = router.getService(TrieRouterOpenApi, {
           validateRequest: true,
         });
@@ -2017,7 +2025,9 @@ describe('TrieRouterOpenApi', function () {
       });
 
       it('should ignore the media type "application/octet-stream" in "/responses/{statusCode}/content"', function () {
-        const router = new TrieRouter();
+        const router = new TrieRouter({
+          ignoredMediaTypes: [OAMediaType.APPLICATION_OCTET_STREAM],
+        });
         const S = router.getService(TrieRouterOpenApi, {
           validateResponse: true,
         });
@@ -2063,7 +2073,9 @@ describe('TrieRouterOpenApi', function () {
       });
 
       it('should ignore the media type "multipart/form-data" in "/responses/{statusCode}/content"', function () {
-        const router = new TrieRouter();
+        const router = new TrieRouter({
+          ignoredMediaTypes: [OAMediaType.MULTIPART_FORM_DATA],
+        });
         const S = router.getService(TrieRouterOpenApi, {
           validateResponse: true,
         });
@@ -2662,7 +2674,9 @@ describe('TrieRouterOpenApi', function () {
       });
 
       it('should ignore the media type "application/octet-stream" in "/parameters/{n}/content"', function () {
-        const router = new TrieRouter();
+        const router = new TrieRouter({
+          ignoredMediaTypes: [OAMediaType.APPLICATION_OCTET_STREAM],
+        });
         const S = router.getService(TrieRouterOpenApi, {
           validateRequest: true,
           validateResponse: true,
@@ -2700,7 +2714,9 @@ describe('TrieRouterOpenApi', function () {
       });
 
       it('should ignore the media type "multipart/form-data" in "/parameters/{n}/content"', function () {
-        const router = new TrieRouter();
+        const router = new TrieRouter({
+          ignoredMediaTypes: [OAMediaType.MULTIPART_FORM_DATA],
+        });
         const S = router.getService(TrieRouterOpenApi, {
           validateRequest: true,
           validateResponse: true,
@@ -2738,7 +2754,9 @@ describe('TrieRouterOpenApi', function () {
       });
 
       it('should ignore the media type "application/octet-stream" in "/requestBody/content"', function () {
-        const router = new TrieRouter();
+        const router = new TrieRouter({
+          ignoredMediaTypes: [OAMediaType.APPLICATION_OCTET_STREAM],
+        });
         const S = router.getService(TrieRouterOpenApi, {
           validateRequest: true,
           validateResponse: true,
@@ -2768,7 +2786,9 @@ describe('TrieRouterOpenApi', function () {
       });
 
       it('should ignore the media type "multipart/form-data" in "/requestBody/content"', function () {
-        const router = new TrieRouter();
+        const router = new TrieRouter({
+          ignoredMediaTypes: [OAMediaType.MULTIPART_FORM_DATA],
+        });
         const S = router.getService(TrieRouterOpenApi, {
           validateRequest: true,
           validateResponse: true,
@@ -2798,7 +2818,9 @@ describe('TrieRouterOpenApi', function () {
       });
 
       it('should ignore the media type "application/octet-stream" in "/responses/{statusCode}/content"', function () {
-        const router = new TrieRouter();
+        const router = new TrieRouter({
+          ignoredMediaTypes: [OAMediaType.APPLICATION_OCTET_STREAM],
+        });
         const S = router.getService(TrieRouterOpenApi, {
           validateResponse: true,
         });
@@ -2844,7 +2866,9 @@ describe('TrieRouterOpenApi', function () {
       });
 
       it('should ignore the media type "multipart/form-data" in "/responses/{statusCode}/content"', function () {
-        const router = new TrieRouter();
+        const router = new TrieRouter({
+          ignoredMediaTypes: [OAMediaType.MULTIPART_FORM_DATA],
+        });
         const S = router.getService(TrieRouterOpenApi, {
           validateResponse: true,
         });
@@ -2909,7 +2933,7 @@ describe('TrieRouterOpenApi', function () {
             return 'OK';
           },
         });
-        router.requestListener(request, response);
+        router.handleRequest(request, response);
         const res = await response.getBody();
         expect(res).to.be.eq('OK');
       });
@@ -2941,7 +2965,7 @@ describe('TrieRouterOpenApi', function () {
             return ctx.query.foo;
           },
         });
-        router.requestListener(request, response);
+        router.handleRequest(request, response);
         const res = await response.getBody();
         expect(res).to.be.eq('bar');
       });
@@ -2973,7 +2997,7 @@ describe('TrieRouterOpenApi', function () {
             return ctx.query.foo;
           },
         });
-        router.requestListener(request, response);
+        router.handleRequest(request, response);
         const res = await response.getBody();
         expect(res).to.be.eq('bar');
       });
@@ -3009,7 +3033,7 @@ describe('TrieRouterOpenApi', function () {
             return ctx.query.foo;
           },
         });
-        router.requestListener(request, response);
+        router.handleRequest(request, response);
         const res = await response.getBody();
         expect(res).to.be.eq('bar');
       });
@@ -3045,7 +3069,7 @@ describe('TrieRouterOpenApi', function () {
             return ctx.query.foo;
           },
         });
-        router.requestListener(request, response);
+        router.handleRequest(request, response);
         const res = await response.getBody();
         expect(res).to.be.eq('bar');
       });
@@ -3079,7 +3103,7 @@ describe('TrieRouterOpenApi', function () {
             return ctx.body;
           },
         });
-        router.requestListener(request, response);
+        router.handleRequest(request, response);
         const res = await response.getBody();
         expect(res).to.be.eq('test');
       });
@@ -3115,7 +3139,7 @@ describe('TrieRouterOpenApi', function () {
             return ctx.body;
           },
         });
-        router.requestListener(request, response);
+        router.handleRequest(request, response);
         const res = await response.getBody();
         expect(res).to.be.eq('test');
       });
@@ -3150,7 +3174,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.params.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('bar');
         });
@@ -3182,7 +3206,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.params.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -3218,7 +3242,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.query.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('bar');
         });
@@ -3250,7 +3274,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.query.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -3286,7 +3310,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.headers.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('bar');
         });
@@ -3318,7 +3342,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.headers.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -3354,7 +3378,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.cookies.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('bar');
         });
@@ -3386,7 +3410,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.headers.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -3424,7 +3448,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.params.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('bar');
         });
@@ -3456,7 +3480,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.params.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -3492,7 +3516,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.query.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('bar');
         });
@@ -3524,7 +3548,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.query.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -3560,7 +3584,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.headers.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('bar');
         });
@@ -3592,7 +3616,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.headers.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -3628,7 +3652,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.cookies.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('bar');
         });
@@ -3660,7 +3684,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.headers.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -3702,7 +3726,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.params.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('bar');
         });
@@ -3738,7 +3762,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.params.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -3778,7 +3802,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.query.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('bar');
         });
@@ -3814,7 +3838,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.query.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -3854,7 +3878,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.headers.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('bar');
         });
@@ -3890,7 +3914,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.headers.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -3930,7 +3954,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.cookies.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('bar');
         });
@@ -3966,7 +3990,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.headers.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -3976,7 +4000,9 @@ describe('TrieRouterOpenApi', function () {
         });
 
         it('should ignore the media type "application/octet-stream"', async function () {
-          const router = new TrieRouter();
+          const router = new TrieRouter({
+            ignoredMediaTypes: [OAMediaType.APPLICATION_OCTET_STREAM],
+          });
           router.useService(TrieRouterOpenApi, {validateRequest: true});
           const request = createRequestMock({
             method: HttpMethod.GET,
@@ -4006,13 +4032,15 @@ describe('TrieRouterOpenApi', function () {
               return ctx.params.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eql('bar');
         });
 
         it('should ignore the media type "multipart/form-data"', async function () {
-          const router = new TrieRouter();
+          const router = new TrieRouter({
+            ignoredMediaTypes: [OAMediaType.MULTIPART_FORM_DATA],
+          });
           router.useService(TrieRouterOpenApi, {validateRequest: true});
           const request = createRequestMock({
             method: HttpMethod.GET,
@@ -4042,7 +4070,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.params.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eql('bar');
         });
@@ -4078,7 +4106,7 @@ describe('TrieRouterOpenApi', function () {
               throw new Error('Should not be called!');
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -4119,7 +4147,7 @@ describe('TrieRouterOpenApi', function () {
               throw new Error('Should not be called!');
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -4160,7 +4188,7 @@ describe('TrieRouterOpenApi', function () {
               throw new Error('Should not be called!');
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -4203,7 +4231,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.params.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('bar');
         });
@@ -4239,7 +4267,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.params.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -4279,7 +4307,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.query.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('bar');
         });
@@ -4315,7 +4343,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.query.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -4355,7 +4383,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.headers.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('bar');
         });
@@ -4391,7 +4419,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.headers.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -4431,7 +4459,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.cookies.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('bar');
         });
@@ -4467,7 +4495,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.headers.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -4477,7 +4505,9 @@ describe('TrieRouterOpenApi', function () {
         });
 
         it('should ignore the media type "application/octet-stream"', async function () {
-          const router = new TrieRouter();
+          const router = new TrieRouter({
+            ignoredMediaTypes: [OAMediaType.APPLICATION_OCTET_STREAM],
+          });
           router.useService(TrieRouterOpenApi, {validateRequest: true});
           const builder = router.getService(OADocumentBuilder);
           builder.defineParameterComponent('param', {
@@ -4507,13 +4537,15 @@ describe('TrieRouterOpenApi', function () {
               return ctx.params.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eql('bar');
         });
 
         it('should ignore the media type "multipart/form-data"', async function () {
-          const router = new TrieRouter();
+          const router = new TrieRouter({
+            ignoredMediaTypes: [OAMediaType.MULTIPART_FORM_DATA],
+          });
           router.useService(TrieRouterOpenApi, {validateRequest: true});
           const builder = router.getService(OADocumentBuilder);
           builder.defineParameterComponent('param', {
@@ -4543,7 +4575,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.params.foo;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eql('bar');
         });
@@ -4579,7 +4611,7 @@ describe('TrieRouterOpenApi', function () {
               throw new Error('Should not be called!');
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -4620,7 +4652,7 @@ describe('TrieRouterOpenApi', function () {
               throw new Error('Should not be called!');
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -4661,7 +4693,7 @@ describe('TrieRouterOpenApi', function () {
               throw new Error('Should not be called!');
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -4702,7 +4734,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.body;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('test');
         });
@@ -4736,7 +4768,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.body;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -4746,7 +4778,9 @@ describe('TrieRouterOpenApi', function () {
         });
 
         it('should ignore the media type "application/octet-stream"', async function () {
-          const router = new TrieRouter();
+          const router = new TrieRouter({
+            ignoredMediaTypes: [OAMediaType.APPLICATION_OCTET_STREAM],
+          });
           router.useService(TrieRouterOpenApi, {validateRequest: true});
           const request = createRequestMock({
             method: HttpMethod.POST,
@@ -4775,13 +4809,16 @@ describe('TrieRouterOpenApi', function () {
               return ctx.body;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
+          console.log(res);
           expect(res).to.be.undefined;
         });
 
         it('should ignore the media type "multipart/form-data"', async function () {
-          const router = new TrieRouter();
+          const router = new TrieRouter({
+            ignoredMediaTypes: [OAMediaType.MULTIPART_FORM_DATA],
+          });
           router.useService(TrieRouterOpenApi, {validateRequest: true});
           const request = createRequestMock({
             method: HttpMethod.POST,
@@ -4810,7 +4847,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.body;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.undefined;
         });
@@ -4845,13 +4882,11 @@ describe('TrieRouterOpenApi', function () {
               return ctx.body;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
-              message:
-                'Media type "media/unknown" is not supported ' +
-                'by the request body specification.',
+              message: 'Media type "media/unknown" is not supported.',
             },
           });
         });
@@ -4886,7 +4921,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.body;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {message: 'Media type "application/xml" is not supported.'},
@@ -4928,7 +4963,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.body;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('test');
         });
@@ -4966,7 +5001,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.body;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -4976,7 +5011,9 @@ describe('TrieRouterOpenApi', function () {
         });
 
         it('should ignore the media type "application/octet-stream"', async function () {
-          const router = new TrieRouter();
+          const router = new TrieRouter({
+            ignoredMediaTypes: [OAMediaType.APPLICATION_OCTET_STREAM],
+          });
           router.useService(TrieRouterOpenApi, {validateRequest: true});
           const builder = router.getService(OADocumentBuilder);
           builder.defineRequestBodyComponent('body', {
@@ -5009,13 +5046,15 @@ describe('TrieRouterOpenApi', function () {
               return ctx.body;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.undefined;
         });
 
         it('should ignore the media type "multipart/form-data"', async function () {
-          const router = new TrieRouter();
+          const router = new TrieRouter({
+            ignoredMediaTypes: [OAMediaType.MULTIPART_FORM_DATA],
+          });
           router.useService(TrieRouterOpenApi, {validateRequest: true});
           const builder = router.getService(OADocumentBuilder);
           builder.defineRequestBodyComponent('body', {
@@ -5048,7 +5087,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.body;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.undefined;
         });
@@ -5087,13 +5126,11 @@ describe('TrieRouterOpenApi', function () {
               return ctx.body;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
-              message:
-                'Media type "media/unknown" is not supported ' +
-                'by the request body specification.',
+              message: 'Media type "media/unknown" is not supported.',
             },
           });
         });
@@ -5132,7 +5169,7 @@ describe('TrieRouterOpenApi', function () {
               return ctx.body;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {message: 'Media type "application/xml" is not supported.'},
@@ -5177,7 +5214,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5219,7 +5256,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5259,7 +5296,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5295,7 +5332,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5331,7 +5368,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5369,7 +5406,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5405,7 +5442,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5441,7 +5478,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5483,7 +5520,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5523,7 +5560,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5563,7 +5600,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5605,7 +5642,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5645,7 +5682,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5685,7 +5722,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5728,7 +5765,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5773,7 +5810,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5824,7 +5861,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5873,7 +5910,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5917,7 +5954,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -5965,7 +6002,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -6007,7 +6044,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -6045,7 +6082,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -6083,7 +6120,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -6123,7 +6160,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -6161,7 +6198,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -6199,7 +6236,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -6243,7 +6280,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -6285,7 +6322,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -6327,7 +6364,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -6371,7 +6408,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -6413,7 +6450,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -6455,7 +6492,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -6503,7 +6540,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -6553,7 +6590,7 @@ describe('TrieRouterOpenApi', function () {
                 return 'OK';
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(res).to.be.eq('OK');
           });
@@ -6580,7 +6617,7 @@ describe('TrieRouterOpenApi', function () {
             return 'OK';
           },
         });
-        router.requestListener(request, response);
+        router.handleRequest(request, response);
         const res = await response.getBody();
         expect(res).to.be.eq('OK');
       });
@@ -6616,7 +6653,7 @@ describe('TrieRouterOpenApi', function () {
             return 'test';
           },
         });
-        router.requestListener(request, response);
+        router.handleRequest(request, response);
         const res = await response.getBody();
         expect(res).to.be.eq('test');
       });
@@ -6654,7 +6691,7 @@ describe('TrieRouterOpenApi', function () {
             return 'test';
           },
         });
-        router.requestListener(request, response);
+        router.handleRequest(request, response);
         const res = await response.getBody();
         expect(res).to.be.eql('test');
       });
@@ -6686,7 +6723,7 @@ describe('TrieRouterOpenApi', function () {
               return undefined;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.undefined;
         });
@@ -6715,7 +6752,7 @@ describe('TrieRouterOpenApi', function () {
               return undefined;
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.undefined;
         });
@@ -6753,7 +6790,7 @@ describe('TrieRouterOpenApi', function () {
               return 'test';
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('test');
         });
@@ -6789,7 +6826,7 @@ describe('TrieRouterOpenApi', function () {
               return 'test';
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {message: 'Value at "/response/body" must be number.'},
@@ -6797,7 +6834,9 @@ describe('TrieRouterOpenApi', function () {
         });
 
         it('should ignore the media type "application/octet-stream"', async function () {
-          const router = new TrieRouter();
+          const router = new TrieRouter({
+            ignoredMediaTypes: [OAMediaType.APPLICATION_OCTET_STREAM],
+          });
           router.useService(TrieRouterOpenApi, {validateResponse: true});
           const request = createRequestMock({
             method: HttpMethod.GET,
@@ -6832,7 +6871,7 @@ describe('TrieRouterOpenApi', function () {
               ctx.response.end(data);
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eql('test');
         });
@@ -6868,7 +6907,7 @@ describe('TrieRouterOpenApi', function () {
               return 'OK';
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -6920,7 +6959,7 @@ describe('TrieRouterOpenApi', function () {
               return 'OK';
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -6961,7 +7000,7 @@ describe('TrieRouterOpenApi', function () {
               return '{"foo":"bar"';
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -7005,7 +7044,7 @@ describe('TrieRouterOpenApi', function () {
               return 'test';
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(res).to.be.eq('test');
         });
@@ -7043,7 +7082,7 @@ describe('TrieRouterOpenApi', function () {
               return 'test';
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {message: 'Value at "/response/body" must be number.'},
@@ -7084,7 +7123,7 @@ describe('TrieRouterOpenApi', function () {
               return '{"foo":"bar"';
             },
           });
-          router.requestListener(request, response);
+          router.handleRequest(request, response);
           const res = await response.getBody();
           expect(JSON.parse(res)).to.be.eql({
             error: {
@@ -7133,7 +7172,7 @@ describe('TrieRouterOpenApi', function () {
                 return {prop: '10'};
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(JSON.parse(res)).to.be.eql({prop: 10});
           });
@@ -7181,7 +7220,7 @@ describe('TrieRouterOpenApi', function () {
                 return {prop: '10'};
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(JSON.parse(res)).to.be.eql({prop: 10});
           });
@@ -7228,7 +7267,7 @@ describe('TrieRouterOpenApi', function () {
                 return {foo: 10, bar: 20};
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(JSON.parse(res)).to.be.eql({foo: 10});
           });
@@ -7277,7 +7316,7 @@ describe('TrieRouterOpenApi', function () {
                 return {foo: 10, bar: 20};
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(JSON.parse(res)).to.be.eql({foo: 10});
           });
@@ -7326,7 +7365,7 @@ describe('TrieRouterOpenApi', function () {
                 return {};
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(JSON.parse(res)).to.be.eql({prop: 10});
           });
@@ -7377,7 +7416,7 @@ describe('TrieRouterOpenApi', function () {
                 return {};
               },
             });
-            router.requestListener(request, response);
+            router.handleRequest(request, response);
             const res = await response.getBody();
             expect(JSON.parse(res)).to.be.eql({prop: 10});
           });

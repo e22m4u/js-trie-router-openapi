@@ -275,18 +275,30 @@ var _TrieRouterOpenApi = class _TrieRouterOpenApi extends import_js_service.Serv
     } else if (!isBuilderRegistered) {
       this.useService(import_js_openapi2.OADocumentBuilder, options.document);
     }
-    const router = this.getService(import_js_trie_router.TrieRouter);
-    if (!router.hasHook(import_js_trie_router.RouterHookType.ON_DEFINE_ROUTE, onDefineRouteOpenApiHook)) {
-      router.addHook(import_js_trie_router.RouterHookType.ON_DEFINE_ROUTE, onDefineRouteOpenApiHook);
+    const hookRegistry = this.getService(import_js_trie_router.RouterHookRegistry);
+    if (!hookRegistry.hasHook(
+      import_js_trie_router.RouterHookType.ON_DEFINE_ROUTE,
+      onDefineRouteOpenApiHook
+    )) {
+      hookRegistry.addHook(
+        import_js_trie_router.RouterHookType.ON_DEFINE_ROUTE,
+        onDefineRouteOpenApiHook
+      );
     }
-    if (options.validateRequest && !router.hasHook(import_js_trie_router.RouterHookType.PRE_HANDLER, requestValidationOpenApiHook)) {
-      router.addHook(import_js_trie_router.RouterHookType.PRE_HANDLER, requestValidationOpenApiHook);
+    if (options.validateRequest && !hookRegistry.hasHook(
+      import_js_trie_router.RouterHookType.PRE_HANDLER,
+      requestValidationOpenApiHook
+    )) {
+      hookRegistry.addHook(
+        import_js_trie_router.RouterHookType.PRE_HANDLER,
+        requestValidationOpenApiHook
+      );
     }
-    if (options.validateResponse && !router.hasHook(
+    if (options.validateResponse && !hookRegistry.hasHook(
       import_js_trie_router.RouterHookType.POST_HANDLER,
       responseValidationOpenApiHook
     )) {
-      router.addHook(
+      hookRegistry.addHook(
         import_js_trie_router.RouterHookType.POST_HANDLER,
         responseValidationOpenApiHook
       );

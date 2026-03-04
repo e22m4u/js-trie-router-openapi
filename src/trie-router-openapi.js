@@ -6,12 +6,12 @@ import {createError, trieRouterPathToOpenApiPath} from './utils/index.js';
 import {tryToParseDataWithMediaType} from './try-to-parse-data-with-media-type.js';
 
 import {
-  TrieRouter,
   HttpMethod,
   hasRequestBody,
   RouterHookType,
   parseContentType,
   isReadableStream,
+  RouterHookRegistry,
 } from '@e22m4u/js-trie-router';
 
 import {
@@ -238,32 +238,44 @@ export class TrieRouterOpenApi extends Service {
     else if (!isBuilderRegistered) {
       this.useService(OADocumentBuilder, options.document);
     }
-    const router = this.getService(TrieRouter);
+    const hookRegistry = this.getService(RouterHookRegistry);
     // в момент определения маршрута регистрируется
     // операция в сборщике OpenAPI документа
     if (
-      !router.hasHook(RouterHookType.ON_DEFINE_ROUTE, onDefineRouteOpenApiHook)
+      !hookRegistry.hasHook(
+        RouterHookType.ON_DEFINE_ROUTE,
+        onDefineRouteOpenApiHook,
+      )
     ) {
-      router.addHook(RouterHookType.ON_DEFINE_ROUTE, onDefineRouteOpenApiHook);
+      hookRegistry.addHook(
+        RouterHookType.ON_DEFINE_ROUTE,
+        onDefineRouteOpenApiHook,
+      );
     }
     // если требуется проверка данных входящего запроса,
     // то выполняется регистрация "preHandler" хука
     if (
       options.validateRequest &&
-      !router.hasHook(RouterHookType.PRE_HANDLER, requestValidationOpenApiHook)
+      !hookRegistry.hasHook(
+        RouterHookType.PRE_HANDLER,
+        requestValidationOpenApiHook,
+      )
     ) {
-      router.addHook(RouterHookType.PRE_HANDLER, requestValidationOpenApiHook);
+      hookRegistry.addHook(
+        RouterHookType.PRE_HANDLER,
+        requestValidationOpenApiHook,
+      );
     }
     // если требуется проверка данных ответа сервера,
     // то выполняется регистрация "postHandler" хука
     if (
       options.validateResponse &&
-      !router.hasHook(
+      !hookRegistry.hasHook(
         RouterHookType.POST_HANDLER,
         responseValidationOpenApiHook,
       )
     ) {
-      router.addHook(
+      hookRegistry.addHook(
         RouterHookType.POST_HANDLER,
         responseValidationOpenApiHook,
       );
