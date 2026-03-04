@@ -45,7 +45,7 @@
     "http-errors": "~2.0.1"
   },
   "peerDependencies": {
-    "@e22m4u/js-trie-router": "~0.7.2"
+    "@e22m4u/js-trie-router": "~0.7.3"
   },
   "devDependencies": {
     "@commitlint/cli": "~20.4.2",
