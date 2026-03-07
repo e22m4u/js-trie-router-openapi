@@ -135,7 +135,10 @@ var NOT_VALIDABLE_MEDIA_TYPES = [
   import_js_openapi2.OAMediaType.MULTIPART_FORM_DATA
 ];
 var OA_COMPONENTS_AJV_ID = "OAComponents";
-var _TrieRouterOpenApi = class _TrieRouterOpenApi extends import_js_service.Service {
+var TrieRouterOpenApi = class extends import_js_service.Service {
+  static {
+    __name(this, "TrieRouterOpenApi");
+  }
   /**
    * Options.
    */
@@ -448,8 +451,6 @@ var _TrieRouterOpenApi = class _TrieRouterOpenApi extends import_js_service.Serv
     return rewritten;
   }
 };
-__name(_TrieRouterOpenApi, "TrieRouterOpenApi");
-var TrieRouterOpenApi = _TrieRouterOpenApi;
 function onDefineRouteOpenApiHook(routeDef, container) {
   if (!routeDef || typeof routeDef !== "object" || !routeDef.meta || typeof routeDef.meta !== "object" || routeDef.meta.openApi === void 0 || routeDef.meta.openApi === false) {
     return;
