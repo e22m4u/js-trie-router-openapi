@@ -423,7 +423,7 @@ var TrieRouterOpenApi = class extends import_js_service.Service {
     if (components && !ajv.getSchema(OA_COMPONENTS_AJV_ID)) {
       ajv.addSchema({
         $id: OA_COMPONENTS_AJV_ID,
-        components
+        components: this._removeExtensionKeywords(components)
       });
     }
   }
@@ -449,6 +449,31 @@ var TrieRouterOpenApi = class extends import_js_service.Service {
       }
     }
     return rewritten;
+  }
+  /**
+   * Рекурсивно удаляет ключевые слова расширений (начинаются с "x-").
+   *
+   * @param {boolean|object|object[]} schema
+   * @returns {boolean|object|object[]}
+   */
+  _removeExtensionKeywords(schema) {
+    if (!schema || typeof schema !== "object") {
+      return schema;
+    }
+    if (Array.isArray(schema)) {
+      return schema.map((item) => this._removeExtensionKeywords(item));
+    }
+    const proto = Object.getPrototypeOf(schema);
+    if (proto !== Object.prototype && proto !== null) {
+      return schema;
+    }
+    const res = {};
+    for (const [key, value] of Object.entries(schema)) {
+      if (!key.startsWith("x-")) {
+        res[key] = this._removeExtensionKeywords(value);
+      }
+    }
+    return res;
   }
 };
 function onDefineRouteOpenApiHook(routeDef, container) {
@@ -491,12 +516,13 @@ function onDefineRouteOpenApiHook(routeDef, container) {
               "/" + index
             ].join("");
             inst._ensureComponentsRegistered(ajv, oaDocumentObject.components);
-            const safeOaSchema = inst._rewriteSchemaRefs(
+            let safeOASchema = inst._rewriteSchemaRefs(
               oaParameterObject.schema
             );
+            safeOASchema = inst._removeExtensionKeywords(safeOASchema);
             const validator = ajv.compile({
               type: import_js_openapi2.OADataType.OBJECT,
-              properties: { value: safeOaSchema }
+              properties: { value: safeOASchema }
             });
             inst._setCompiledAjvValidator(validatorKey, validator);
             if (routeDef.method === import_js_trie_router.HttpMethod.GET) {
@@ -532,12 +558,13 @@ function onDefineRouteOpenApiHook(routeDef, container) {
                   ajv,
                   oaDocumentObject.components
                 );
-                const safeOaSchema = inst._rewriteSchemaRefs(
+                let safeOASchema = inst._rewriteSchemaRefs(
                   oaMediaTypeObject.schema
                 );
+                safeOASchema = inst._removeExtensionKeywords(safeOASchema);
                 const validator = ajv.compile({
                   type: import_js_openapi2.OADataType.OBJECT,
-                  properties: { value: safeOaSchema }
+                  properties: { value: safeOASchema }
                 });
                 inst._setCompiledAjvValidator(validatorKey, validator);
                 if (routeDef.method === import_js_trie_router.HttpMethod.GET) {
@@ -581,12 +608,13 @@ function onDefineRouteOpenApiHook(routeDef, container) {
               "/" + escapedMediaType
             ].join("");
             inst._ensureComponentsRegistered(ajv, oaDocumentObject.components);
-            const safeOaSchema = inst._rewriteSchemaRefs(
+            let safeOASchema = inst._rewriteSchemaRefs(
               oaMediaTypeObject.schema
             );
+            safeOASchema = inst._removeExtensionKeywords(safeOASchema);
             const validator = ajv.compile({
               type: import_js_openapi2.OADataType.OBJECT,
-              properties: { value: safeOaSchema }
+              properties: { value: safeOASchema }
             });
             inst._setCompiledAjvValidator(validatorKey, validator);
             if (routeDef.method === import_js_trie_router.HttpMethod.GET) {
@@ -636,12 +664,13 @@ function onDefineRouteOpenApiHook(routeDef, container) {
                   ajv,
                   oaDocumentObject.components
                 );
-                const safeOaSchema = inst._rewriteSchemaRefs(
+                let safeOASchema = inst._rewriteSchemaRefs(
                   oaMediaTypeObject.schema
                 );
+                safeOASchema = inst._removeExtensionKeywords(safeOASchema);
                 const validator = ajv.compile({
                   type: import_js_openapi2.OADataType.OBJECT,
-                  properties: { value: safeOaSchema }
+                  properties: { value: safeOASchema }
                 });
                 inst._setCompiledAjvValidator(validatorKey, validator);
                 if (routeDef.method === import_js_trie_router.HttpMethod.GET) {

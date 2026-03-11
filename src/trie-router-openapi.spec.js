@@ -620,22 +620,65 @@ describe('TrieRouterOpenApi', function () {
       S._ensureComponentsRegistered(ajvMock, components);
       expect(addSchemaCalled).to.be.false;
     });
+
+    it('should register components after removing "x-" extension keywords when not already registered', function () {
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      let addedSchemaToAjv = null;
+      const mockAjv = {
+        getSchema: () => false,
+        addSchema: schema => {
+          addedSchemaToAjv = schema;
+        },
+      };
+      const componentsWithX = {
+        schemas: {
+          test: {
+            type: OADataType.OBJECT,
+            properties: {
+              foo: {type: OADataType.STRING, 'x-keyword': true},
+              bar: {type: OADataType.STRING},
+            },
+            'x-keyword': true,
+          },
+        },
+        'x-keyword': true,
+      };
+      const expectedComponentsWithoutX = {
+        schemas: {
+          test: {
+            type: OADataType.OBJECT,
+            properties: {
+              foo: {type: OADataType.STRING},
+              bar: {type: OADataType.STRING},
+            },
+          },
+        },
+      };
+      const throwable = () =>
+        S._ensureComponentsRegistered(mockAjv, componentsWithX);
+      expect(throwable).to.not.throw();
+      expect(addedSchemaToAjv).to.be.eql({
+        $id: OA_COMPONENTS_AJV_ID,
+        components: expectedComponentsWithoutX,
+      });
+    });
   });
 
   describe('_rewriteSchemaRefs', function () {
     it('should return the input as is if it is null or undefined', function () {
       const router = new TrieRouter();
       const S = router.getService(TrieRouterOpenApi);
-      expect(S._rewriteSchemaRefs(null)).to.be.null;
       expect(S._rewriteSchemaRefs(undefined)).to.be.undefined;
+      expect(S._rewriteSchemaRefs(null)).to.be.null;
     });
 
     it('should return primitive values as is', function () {
       const router = new TrieRouter();
       const S = router.getService(TrieRouterOpenApi);
-      expect(S._rewriteSchemaRefs(true)).to.be.eq(true);
-      expect(S._rewriteSchemaRefs(123)).to.be.eq(123);
       expect(S._rewriteSchemaRefs('string')).to.be.eq('string');
+      expect(S._rewriteSchemaRefs(123)).to.be.eq(123);
+      expect(S._rewriteSchemaRefs(true)).to.be.eq(true);
     });
 
     it('should return an empty object if the input is an empty object', function () {
@@ -757,6 +800,155 @@ describe('TrieRouterOpenApi', function () {
       const S = router.getService(TrieRouterOpenApi);
       const res = S._rewriteSchemaRefs(schema);
       expect(res).to.be.eql(expected);
+    });
+  });
+
+  describe('_removeExtensionKeywords', function () {
+    it('should return the input as is if it is null or undefined', function () {
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      expect(S._removeExtensionKeywords(undefined)).to.be.undefined;
+      expect(S._removeExtensionKeywords(null)).to.be.null;
+    });
+
+    it('should return primitive values as is', function () {
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      expect(S._removeExtensionKeywords('string')).to.be.eq('string');
+      expect(S._removeExtensionKeywords(123)).to.be.eq(123);
+      expect(S._removeExtensionKeywords(true)).to.be.eq(true);
+      expect(S._removeExtensionKeywords(false)).to.be.eq(false);
+    });
+
+    it('should return an empty object if the input is an empty object', function () {
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      const res = S._removeExtensionKeywords({});
+      expect(res).to.be.eql({});
+    });
+
+    it('should return an empty array if the input is an empty array', function () {
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      const res = S._removeExtensionKeywords([]);
+      expect(res).to.be.eql([]);
+    });
+
+    it('should not modify an object without "x-" properties', function () {
+      const schema = {
+        type: OADataType.STRING,
+        description: 'Just a string',
+      };
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      const res = S._removeExtensionKeywords(schema);
+      expect(res).to.be.eql(schema);
+    });
+
+    it('should remove properties starting with "x-" at the top level', function () {
+      const schema = {
+        type: OADataType.NUMBER,
+        'x-hidden': true,
+        'x-internal-id': 42,
+        description: 'A number',
+      };
+      const expected = {
+        type: OADataType.NUMBER,
+        description: 'A number',
+      };
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      const res = S._removeExtensionKeywords(schema);
+      expect(res).to.be.eql(expected);
+    });
+
+    it('should recursively remove "x-" properties from nested objects', function () {
+      const schema = {
+        type: OADataType.OBJECT,
+        properties: {
+          id: {
+            type: OADataType.STRING,
+            'x-read-only': true,
+          },
+          user: {
+            type: OADataType.OBJECT,
+            'x-custom-group': 'admin',
+            properties: {
+              name: {
+                type: OADataType.STRING,
+                'x-nullable': true,
+              },
+            },
+          },
+        },
+        'x-top-level': 'yes',
+      };
+      const expected = {
+        type: OADataType.OBJECT,
+        properties: {
+          id: {type: OADataType.STRING},
+          user: {
+            type: OADataType.OBJECT,
+            properties: {
+              name: {type: OADataType.STRING},
+            },
+          },
+        },
+      };
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      const res = S._removeExtensionKeywords(schema);
+      expect(res).to.be.eql(expected);
+    });
+
+    it('should recursively remove "x-" properties from objects inside arrays', function () {
+      const schema = [
+        {type: OADataType.STRING, 'x-foo': 'bar'},
+        [{type: OADataType.NUMBER, 'x-baz': 'qux'}],
+      ];
+      const expected = [{type: OADataType.STRING}, [{type: OADataType.NUMBER}]];
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      const res = S._removeExtensionKeywords(schema);
+      expect(res).to.be.eql(expected);
+    });
+
+    it('should preserve non-plain objects (Date, Buffer, RegExp, classes) as is', function () {
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      class CustomClass {
+        constructor() {
+          this.value = 42;
+        }
+      }
+      const dateObj = new Date();
+      const bufferObj = Buffer.from('test');
+      const regexObj = /test/i;
+      const customInstance = new CustomClass();
+      const schema = {
+        type: OADataType.OBJECT,
+        default: dateObj,
+        example: bufferObj,
+        examples: [regexObj, customInstance],
+        'x-remove-me': true,
+      };
+      const res = S._removeExtensionKeywords(schema);
+      expect(res).to.not.have.property('x-remove-me');
+      expect(res.default).to.be.eq(dateObj);
+      expect(res.example).to.be.eq(bufferObj);
+      expect(res.examples[0]).to.be.eq(regexObj);
+      expect(res.examples[1]).to.be.eq(customInstance);
+    });
+
+    it('should correctly process objects created with Object.create(null)', function () {
+      const router = new TrieRouter();
+      const S = router.getService(TrieRouterOpenApi);
+      const nullProtoObj = Object.create(null);
+      nullProtoObj.type = OADataType.STRING;
+      nullProtoObj['x-custom'] = 'value';
+      const res = S._removeExtensionKeywords(nullProtoObj);
+      expect(res).to.have.property('type', OADataType.STRING);
+      expect(res).to.not.have.property('x-custom');
     });
   });
 
@@ -2911,6 +3103,152 @@ describe('TrieRouterOpenApi', function () {
           const res = S._hasCompiledAjvValidator(key);
           expect(res).to.be.false;
         });
+      });
+    });
+
+    describe('filtering "x-" extension keywords during route definition', function () {
+      it('should not throw an error for "x-" keywords in global components', function () {
+        const router = new TrieRouter();
+        router.useService(TrieRouterOpenApi, {validateRequest: true});
+        const builder = router.getService(OADocumentBuilder);
+        builder.defineSchemaComponent('test', {
+          type: OADataType.STRING,
+          'x-hidden': true,
+        });
+        const throwable = () => {
+          router.defineRoute({
+            method: HttpMethod.POST,
+            path: '/',
+            meta: {
+              openApi: {
+                requestBody: {
+                  content: {
+                    [OAMediaType.APPLICATION_JSON]: {
+                      schema: {$ref: '#/components/schemas/test'},
+                    },
+                  },
+                },
+              },
+            },
+            handler: () => 'OK',
+          });
+        };
+        expect(throwable).to.not.throw();
+      });
+
+      it('should not throw an error for "x-" keywords in the parameter schema', function () {
+        const router = new TrieRouter();
+        router.useService(TrieRouterOpenApi, {validateRequest: true});
+        const throwable = () => {
+          router.defineRoute({
+            method: HttpMethod.GET,
+            path: '/',
+            meta: {
+              openApi: {
+                parameters: [
+                  {
+                    name: 'param',
+                    in: OAParameterLocation.QUERY,
+                    schema: {
+                      type: OADataType.STRING,
+                      'x-hidden': true,
+                    },
+                  },
+                ],
+              },
+            },
+            handler: () => 'OK',
+          });
+        };
+        expect(throwable).to.not.throw();
+      });
+
+      it('should not throw an error for "x-" keywords in the parameter content schema', function () {
+        const router = new TrieRouter();
+        router.useService(TrieRouterOpenApi, {validateRequest: true});
+        const throwable = () => {
+          router.defineRoute({
+            method: HttpMethod.GET,
+            path: '/',
+            meta: {
+              openApi: {
+                parameters: [
+                  {
+                    name: 'param',
+                    in: OAParameterLocation.QUERY,
+                    content: {
+                      [OAMediaType.APPLICATION_JSON]: {
+                        schema: {
+                          type: OADataType.OBJECT,
+                          'x-hidden': true,
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+            handler: () => 'OK',
+          });
+        };
+        expect(throwable).to.not.throw();
+      });
+
+      it('should not throw an error for "x-" keywords in the request body schema', function () {
+        const router = new TrieRouter();
+        router.useService(TrieRouterOpenApi, {validateRequest: true});
+        const throwable = () => {
+          router.defineRoute({
+            method: HttpMethod.POST,
+            path: '/',
+            meta: {
+              openApi: {
+                requestBody: {
+                  content: {
+                    [OAMediaType.APPLICATION_JSON]: {
+                      schema: {
+                        type: OADataType.OBJECT,
+                        'x-hidden': true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            handler: () => 'OK',
+          });
+        };
+        expect(throwable).to.not.throw();
+      });
+
+      it('should not throw an error for "x-" keywords in the responses schema', function () {
+        const router = new TrieRouter();
+        router.useService(TrieRouterOpenApi, {validateResponse: true});
+        const throwable = () => {
+          router.defineRoute({
+            method: HttpMethod.GET,
+            path: '/',
+            meta: {
+              openApi: {
+                responses: {
+                  200: {
+                    description: 'OK',
+                    content: {
+                      [OAMediaType.APPLICATION_JSON]: {
+                        schema: {
+                          type: OADataType.OBJECT,
+                          'x-hidden': true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            handler: () => 'OK',
+          });
+        };
+        expect(throwable).to.not.throw();
       });
     });
   });

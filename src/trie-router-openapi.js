@@ -404,7 +404,7 @@ export class TrieRouterOpenApi extends Service {
     if (components && !ajv.getSchema(OA_COMPONENTS_AJV_ID)) {
       ajv.addSchema({
         $id: OA_COMPONENTS_AJV_ID,
-        components: components,
+        components: this._removeExtensionKeywords(components),
       });
     }
   }
@@ -437,6 +437,35 @@ export class TrieRouterOpenApi extends Service {
       }
     }
     return rewritten;
+  }
+
+  /**
+   * Рекурсивно удаляет ключевые слова расширений (начинаются с "x-").
+   *
+   * @param {boolean|object|object[]} schema
+   * @returns {boolean|object|object[]}
+   */
+  _removeExtensionKeywords(schema) {
+    if (!schema || typeof schema !== 'object') {
+      return schema;
+    }
+    if (Array.isArray(schema)) {
+      return schema.map(item => this._removeExtensionKeywords(item));
+    }
+    // в OpenAPI схемах в полях "default" или "example"
+    // разработчик может передать экземпляры классов
+    // (например, Date, Buffer или регулярное выражение)
+    const proto = Object.getPrototypeOf(schema);
+    if (proto !== Object.prototype && proto !== null) {
+      return schema;
+    }
+    const res = {};
+    for (const [key, value] of Object.entries(schema)) {
+      if (!key.startsWith('x-')) {
+        res[key] = this._removeExtensionKeywords(value);
+      }
+    }
+    return res;
   }
 }
 
@@ -549,14 +578,18 @@ export function onDefineRouteOpenApiHook(routeDef, container) {
             // регистрация зарегистрированных компонентов
             // в экземпляре Ajv и конвертация ссылок $ref
             inst._ensureComponentsRegistered(ajv, oaDocumentObject.components);
-            const safeOaSchema = inst._rewriteSchemaRefs(
+            let safeOASchema = inst._rewriteSchemaRefs(
               oaParameterObject.schema,
             );
+            // так как Ajv в строгом режиме не поддерживает
+            // ключевые слова расширений из OpenAPI (x-*),
+            // создается безопасная схема без данных ключей
+            safeOASchema = inst._removeExtensionKeywords(safeOASchema);
             // валидатор сохраняется под уникальным ключом
             // для быстрого доступа во время проверки данных
             const validator = ajv.compile({
               type: OADataType.OBJECT,
-              properties: {value: safeOaSchema},
+              properties: {value: safeOASchema},
             });
             inst._setCompiledAjvValidator(validatorKey, validator);
             // если методом маршрута является GET,
@@ -635,14 +668,18 @@ export function onDefineRouteOpenApiHook(routeDef, container) {
                   ajv,
                   oaDocumentObject.components,
                 );
-                const safeOaSchema = inst._rewriteSchemaRefs(
+                let safeOASchema = inst._rewriteSchemaRefs(
                   oaMediaTypeObject.schema,
                 );
+                // так как Ajv в строгом режиме не поддерживает
+                // ключевые слова расширений из OpenAPI (x-*),
+                // создается безопасная схема без данных ключей
+                safeOASchema = inst._removeExtensionKeywords(safeOASchema);
                 // валидатор сохраняется под уникальным ключом
                 // для быстрого доступа во время проверки данных
                 const validator = ajv.compile({
                   type: OADataType.OBJECT,
-                  properties: {value: safeOaSchema},
+                  properties: {value: safeOASchema},
                 });
                 inst._setCompiledAjvValidator(validatorKey, validator);
                 // если методом маршрута является GET,
@@ -751,14 +788,18 @@ export function onDefineRouteOpenApiHook(routeDef, container) {
             // регистрация зарегистрированных компонентов
             // в экземпляре Ajv и конвертация ссылок $ref
             inst._ensureComponentsRegistered(ajv, oaDocumentObject.components);
-            const safeOaSchema = inst._rewriteSchemaRefs(
+            let safeOASchema = inst._rewriteSchemaRefs(
               oaMediaTypeObject.schema,
             );
+            // так как Ajv в строгом режиме не поддерживает
+            // ключевые слова расширений из OpenAPI (x-*),
+            // создается безопасная схема без данных ключей
+            safeOASchema = inst._removeExtensionKeywords(safeOASchema);
             // валидатор сохраняется под уникальным ключом
             // для быстрого доступа во время проверки данных
             const validator = ajv.compile({
               type: OADataType.OBJECT,
-              properties: {value: safeOaSchema},
+              properties: {value: safeOASchema},
             });
             inst._setCompiledAjvValidator(validatorKey, validator);
             // если методом маршрута является GET,
@@ -892,14 +933,18 @@ export function onDefineRouteOpenApiHook(routeDef, container) {
                   ajv,
                   oaDocumentObject.components,
                 );
-                const safeOaSchema = inst._rewriteSchemaRefs(
+                let safeOASchema = inst._rewriteSchemaRefs(
                   oaMediaTypeObject.schema,
                 );
+                // так как Ajv в строгом режиме не поддерживает
+                // ключевые слова расширений из OpenAPI (x-*),
+                // создается безопасная схема без данных ключей
+                safeOASchema = inst._removeExtensionKeywords(safeOASchema);
                 // валидатор сохраняется под уникальным ключом
                 // для быстрого доступа во время проверки данных
                 const validator = ajv.compile({
                   type: OADataType.OBJECT,
-                  properties: {value: safeOaSchema},
+                  properties: {value: safeOASchema},
                 });
                 inst._setCompiledAjvValidator(validatorKey, validator);
                 // если методом маршрута является GET,
