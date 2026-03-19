@@ -62,42 +62,31 @@ router.useService(TrieRouterOpenApi, {
 });
 ```
 
-Определение компонентов схем, используемых в следующих примерах.
+Определение компонента схемы.
 
 ```js
 import {OADataType, OADocumentBuilder} from '@e22m4u/js-trie-router-openapi';
 
 const builder = router.getService(OADocumentBuilder);
 
-// данные нового пользователя
-builder.defineSchemaComponent('userInput', {
-  type: OADataType.OBJECT,
-  properties: {
-    email: {
-      type: OADataType.STRING,
-      format: 'email',
-    },
-    password: {
-      type: OADataType.STRING,
-    },
-  },
-  required: ['email', 'password'],
-});
-
-// публичные данные пользователя
-builder.defineSchemaComponent('userOutput', {
+// определение схемы
+builder.defineSchemaComponent('city', {
   type: OADataType.OBJECT,
   properties: {
     id: {
       type: OADataType.STRING,
       format: 'uuid',
     },
-    email: {
+    name: {
       type: OADataType.STRING,
-      format: 'email',
+      example: 'Moscow',
+    },
+    population: {
+      type: OADataType.NUMBER,
+      default: 0,
     },
   },
-  required: ['id', 'password'],
+  required: ['name'],
 });
 ```
 
@@ -107,19 +96,21 @@ builder.defineSchemaComponent('userOutput', {
 import {HttpMethod} from '@e22m4u/js-trie-router';
 import {oaSchemaRef, OAMediaType} from '@e22m4u/js-trie-router-openapi';
 
+// определение маршрута
 router.defineRoute({
   method: HttpMethod.POST,
-  path: '/users',
+  path: '/cities',
   meta: {
+    // спецификация
     openApi: {
-      summary: 'Create a new user',
+      summary: 'Create a new city',
       // тело запроса
       requestBody: {
-        description: 'Data for the new user',
+        description: 'Document data',
         required: true,
         content: {
           [OAMediaType.APPLICATION_JSON]: {
-            schema: oaSchemaRef('userInput'),
+            schema: oaSchemaRef('city'),
             // ссылка на схему ^^^
           },
         },
@@ -127,10 +118,10 @@ router.defineRoute({
       responses: {
         // успешный ответ
         201: {
-          description: 'User created',
+          description: 'Document created',
           content: {
             [OAMediaType.APPLICATION_JSON]: {
-              schema: oaSchemaRef('userOutput'),
+              schema: oaSchemaRef('city'),
               // ссылка на схему ^^^
             },
           },
@@ -164,27 +155,27 @@ console.log(jsonDoc);
 //     "version": "0.0.1"
 //   },
 //   "paths": {
-//     "/users": {
+//     "/cities": {
 //       "post": {
-//         "summary": "Create a new user",
+//         "summary": "Create a new city",
 //         "requestBody": {
-//           "description": "Data for the new user",
+//           "description": "Document data",
 //           "required": true,
 //           "content": {
 //             "application/json": {
 //               "schema": {
-//                 "$ref": "#/components/schemas/userInput"
+//                 "$ref": "#/components/schemas/city"
 //               }
 //             }
 //           }
 //         },
 //         "responses": {
 //           "201": {
-//             "description": "User created",
+//             "description": "Document created",
 //             "content": {
 //               "application/json": {
 //                 "schema": {
-//                   "$ref": "#/components/schemas/userOutput"
+//                   "$ref": "#/components/schemas/city"
 //                 }
 //               }
 //             }
@@ -195,8 +186,7 @@ console.log(jsonDoc);
 //   },
 //   "components": {
 //     "schemas": {
-//       "userInput": { ... },
-//       "userOutput": { ... }
+//       "city": { ... }
 //     }
 //   }
 // }
