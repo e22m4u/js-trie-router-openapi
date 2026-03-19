@@ -67,6 +67,7 @@ router.useService(TrieRouterOpenApi, {
 ```js
 import {OADataType, OADocumentBuilder} from '@e22m4u/js-trie-router-openapi';
 
+// извлечение сборщика документа
 const builder = router.getService(OADocumentBuilder);
 
 // определение схемы
