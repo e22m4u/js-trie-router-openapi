@@ -159,8 +159,7 @@ router.defineRoute({
   path: '/openapi.json',
   handler: () => {
     const builder = router.getService(OADocumentBuilder);
-    return builder.build();
-    // вернет объект, который маршрутизатор превратит в JSON
+    return builder.buildJson();
   },
 });
 ```
