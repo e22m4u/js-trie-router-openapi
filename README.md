@@ -106,7 +106,7 @@ builder.defineSchemaComponent('city', {
 });
 ```
 
-Определение метаданных маршрута.
+Использование компонентов в спецификации маршрута.
 
 ```js
 import {HttpMethod} from '@e22m4u/js-trie-router';
@@ -126,8 +126,8 @@ router.defineRoute({
         required: true,
         content: {
           [OAMediaType.APPLICATION_JSON]: {
-            schema: oaSchemaRef('city'),
-            // ссылка на схему ^^^
+            schema: oaSchemaRef('city'), // <= ссылка на компонент
+            // создаст {$ref: '#/components/schemas/city'}
           },
         },
       },
@@ -137,8 +137,8 @@ router.defineRoute({
           description: 'Document created',
           content: {
             [OAMediaType.APPLICATION_JSON]: {
-              schema: oaSchemaRef('city'),
-              // ссылка на схему ^^^
+              schema: oaSchemaRef('city'), // <= ссылка на компонент
+              // создаст {$ref: '#/components/schemas/city'}
             },
           },
         },
