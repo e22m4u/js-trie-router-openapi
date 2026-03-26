@@ -1,6 +1,6 @@
 ## @e22m4u/js-trie-router-openapi
 
-Создание OpenAPI документа для
+Модуль создания OpenAPI документа для
 [@e22m4u/js-trie-router](https://www.npmjs.com/package/@e22m4u/js-trie-router)
 
 - Генерация OpenAPI 3.1 документа согласно определению маршрутов.
