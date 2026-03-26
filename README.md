@@ -254,47 +254,47 @@ console.log(mySchemaRef); // {$ref: '#/components/schemas/mySchema'}
 **Schema**
 
 Метод: `defineSchemaComponent(name, component)`  
-Утилита: `oaSchemaRef(name)`
+Ссылка: `oaSchemaRef(name)`
 
 **Parameter**
 
 Метод: `defineParameterComponent(name, component)`  
-Утилита: `oaParameterRef(name)`
+Ссылка: `oaParameterRef(name)`
 
 **Request Body**
 
 Метод: `defineRequestBodyComponent(name, component)`  
-Утилита: `oaRequestBodyRef(name)`
+Ссылка: `oaRequestBodyRef(name)`
 
 **Response**
 
 Метод: `defineResponseComponent(name, component)`  
-Утилита: `oaResponseRef(name)`
+Ссылка: `oaResponseRef(name)`
 
 **Security Scheme**
 
 Метод: `defineSecuritySchemeComponent(name, component)`  
-Утилита: `oaSecuritySchemeRef(name)`
+Ссылка: `oaSecuritySchemeRef(name)`
 
 **Example**
 
 Метод: `defineExampleComponent(name, component)`  
-Утилита: `oaExampleRef(name)`
+Ссылка: `oaExampleRef(name)`
 
 **Link**
 
 Метод: `defineLinkComponent(name, component)`  
-Утилита: `oaLinkRef(name)`
+Ссылка: `oaLinkRef(name)`
 
 **Callback**
 
 Метод: `defineCallbackComponent(name, component)`  
-Утилита: `oaCallbackRef(name)`
+Ссылка: `oaCallbackRef(name)`
 
 **Path Item**
 
 Метод: `definePathItemComponent(name, component)`  
-Утилита: `oaPathItemRef(name)`
+Ссылка: `oaPathItemRef(name)`
 
 ### Пример использования
 
