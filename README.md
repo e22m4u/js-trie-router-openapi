@@ -85,7 +85,7 @@ import {OADataType, OADocumentBuilder} from '@e22m4u/js-trie-router-openapi';
 // извлечение сборщика документа
 const builder = router.getService(OADocumentBuilder);
 
-// определение схемы
+// определение компонента схемы
 builder.defineSchemaComponent('city', {
   type: OADataType.OBJECT,
   properties: {
