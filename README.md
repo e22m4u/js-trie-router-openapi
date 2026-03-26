@@ -4,18 +4,14 @@
 [@e22m4u/js-trie-router](https://www.npmjs.com/package/@e22m4u/js-trie-router)
 
 - Генерация OpenAPI 3.1 документа согласно определению маршрутов.
-- Валидация данных запроса и тела ответа согласно схеме.
-- Приведение типов для данных запроса и ответа.
-- Удаление лишних полей из данных запроса и ответа.
-- Подстановка значений по умолчанию согласно схеме.
-- Автоматический парсинг *JSON* в параметрах запроса.
+- Валидация OpenAPI схем и компонентов в момент определения.
 - Поддержка ссылок `$ref` на зарегистрированные компоненты.
-- Валидация схем и компонентов OpenAPI в момент определения.
 
 ## Содержание
 
 - [Установка](#установка)
 - [Использование](#использование)
+- [Компоненты и ссылки](#компоненты-и-ссылки)
 - [Настройки](#настройки)
 - [Тесты](#тесты)
 - [Лицензия](#лицензия)
@@ -51,7 +47,9 @@ import {TrieRouterOpenApi} from '@e22m4u/js-trie-router-openapi';
 // создание маршрутизатора
 const router = new TrieRouter();
 
-// подключение расширения
+// модуль анализирует маршруты в момент их регистрации
+// в маршрутизаторе, поэтому подключение модуля должно
+// происходить до определения маршрутов
 router.useService(TrieRouterOpenApi, {
   document: {
     info: {
@@ -59,6 +57,23 @@ router.useService(TrieRouterOpenApi, {
       version: '0.0.1',
     },
   },
+});
+```
+
+Быстрое добавление маршрута в документацию.
+
+```js
+router.defineRoute({
+  method: HttpMethod.GET,
+  path: '/ping',
+  meta: {
+    // если детальное описание параметров не требуется,
+    // можно передать логическое значение true, тогда
+    // маршрутизатор автоматически зарегистрирует
+    // путь и метод в OpenAPI документе
+    openApi: true,
+  },
+  handler: () => 'pong',
 });
 ```
 
@@ -136,6 +151,20 @@ router.defineRoute({
 });
 ```
 
+Отдача документации через маршрутизатор.
+
+```js
+router.defineRoute({
+  method: HttpMethod.GET,
+  path: '/openapi.json',
+  handler: () => {
+    const builder = router.getService(OADocumentBuilder);
+    return builder.build();
+    // вернет объект, который маршрутизатор превратит в JSON
+  },
+});
+```
+
 Формирование JSON документа.
 
 ```js
@@ -193,6 +222,150 @@ console.log(jsonDoc);
 // }
 ```
 
+## Компоненты и ссылки
+
+OpenAPI позволяет выносить повторяющиеся участки спецификации в общий набор
+компонентов. Это делает определения маршрутов и итоговый документ компактными.
+
+Для регистрации компонентов в классе `OADocumentBuilder` предусмотрены
+специальные методы, а для формирования ссылок на эти компоненты используются
+функции-утилиты.
+
+```js
+import {oaSchemaRef, OADocumentBuilder} from '@e22m4u/js-trie-router-openapi';
+
+// извлечение сборщика из маршрутизатора
+router.get(OADocumentBuilder);
+
+// регистрация компонента схемы соответствющим методом
+builder.defineSchemaComponent('mySchema', {type: OADataType.OBJECT});
+
+// создание объекта-ссылки с использованием утилиты
+const mySchemaRef = oaSchemaRef('mySchema');
+console.log(mySchemaRef); // {$ref: '#/components/schemas/mySchema'}
+```
+
+### Поддерживаемые типы компонентов
+
+Ниже представлен список доступных типов компонентов. Для каждого из них
+указан метод регистрации в объекте `OADocumentBuilder` и соответствующая
+функция-утилита для создания `$ref` ссылки.
+
+**Schema**
+
+Метод: `defineSchemaComponent(name, component)`  
+Утилита: `oaSchemaRef(name)`
+
+**Parameter**
+
+Метод: `defineParameterComponent(name, component)`  
+Утилита: `oaParameterRef(name)`
+
+**Request Body**
+
+Метод: `defineRequestBodyComponent(name, component)`  
+Утилита: `oaRequestBodyRef(name)`
+
+**Response**
+
+Метод: `defineResponseComponent(name, component)`  
+Утилита: `oaResponseRef(name)`
+
+**Security Scheme**
+
+Метод: `defineSecuritySchemeComponent(name, component)`  
+Утилита: `oaSecuritySchemeRef(name)`
+
+**Example**
+
+Метод: `defineExampleComponent(name, component)`  
+Утилита: `oaExampleRef(name)`
+
+**Link**
+
+Метод: `defineLinkComponent(name, component)`  
+Утилита: `oaLinkRef(name)`
+
+**Callback**
+
+Метод: `defineCallbackComponent(name, component)`  
+Утилита: `oaCallbackRef(name)`
+
+**Path Item**
+
+Метод: `definePathItemComponent(name, component)`  
+Утилита: `oaPathItemRef(name)`
+
+### Пример использования
+
+Если в маршрутах используется определенный параметр и стандартный ответ,
+то их можно зарегистрировать в качестве переиспользуемых компонентов.
+В примере ниже определяется компонент параметра `limit` и компонент
+ответа ошибки `404 Not Found`.
+
+```js
+import {
+  OADataType,
+  OADocumentBuilder,
+  OAParameterLocation,
+} from '@e22m4u/js-trie-router-openapi';
+
+// извлечение сборщика документа из маршрутизатора
+const builder = router.getService(OADocumentBuilder);
+
+// регистрация компонента параметра
+builder.defineParameterComponent('limitParam', {
+  name: 'limit',
+  in: OAParameterLocation.QUERY,
+  description: 'Pagination limit',
+  schema: {
+    type: OADataType.INTEGER,
+    default: 10,
+  },
+});
+
+// регистрация компонента ответа
+builder.defineResponseComponent('notFoundResponse', {
+  description: 'Resource is not found'
+});
+```
+
+Теперь можно ссылаться на эти компоненты при определении маршрутов, используя
+специальные утилиты, которые автоматически генерируют объект ссылки.
+
+```js
+import {HttpMethod} from '@e22m4u/js-trie-router';
+
+import {
+  oaResponseRef,
+  oaParameterRef,
+} from '@e22m4u/js-trie-router-openapi';
+
+router.defineRoute({
+  method: HttpMethod.GET,
+  path: '/articles',
+  meta: {
+    openApi: {
+      summary: 'Get articles list',
+      parameters: [
+        oaParameterRef('limitParam'), // <= ссылка на параметр
+        // создаст {$ref: '#/components/parameters/limitParam'}
+      ],
+      responses: {
+        200: {
+          description: 'Successful response with articles list'
+        },
+        404: oaResponseRef('notFoundResponse') // <= ссылка на ответ
+        // создаст {$ref: '#/components/responses/notFoundResponse'}
+      },
+    },
+  },
+  handler: (ctx) => {
+    // логика контроллера...
+  },
+});
+```
+
 ## Настройки
 
 При подключении данного расширения к маршрутизатору, вторым аргументом можно
@@ -205,55 +378,18 @@ import {TrieRouterOpenApi} from '@e22m4u/js-trie-router-openapi';
 const router = new TrieRouter();
 
 router.useService(TrieRouterOpenApi, {
-  // параметры:
   document: {
     info: {
       title: 'API Documentation',
       version: '0.0.1',
     },
   },
-  validateRequest: false,
-  validateResponse: false,
-  // ...
 });
-```
-
-### Порядок объявления компонентов и маршрутов
-
-При включении валидации параметром `validateRequest` или `validateResponse`,
-для достижения максимальной производительности и экономии оперативной памяти,
-маршрутизатор кэширует глобальный словарь OpenAPI-компонентов.
-
-Кэширование происходит в момент регистрации первого маршрута. Данный подход
-требует соблюдения строгого порядка инициализации приложения. Все глобальные
-компоненты должны быть добавлены до регистрации первого маршрута.
-
-```js
-const builder = router.getService(OADocumentBuilder);
-
-// 1. сначала объявляются все схемы и компоненты
-builder.defineSchemaComponent('user', {/* ... */});
-builder.defineSchemaComponent('post', {/* ... */});
-
-// 2. только после этого регистрируются маршруты
-router.defineRoute({path: '/users', /* ... */});
-router.defineRoute({path: '/posts', /* ... */});
 ```
 
 ### Параметры
 
 - [document](#document)
-- [validateRequest](#validaterequest)
-- [validateResponse](#validateresponse)
-- [parseRequestParameterContent](#parserequestparametercontent)
-- [coerceRequestParameterDataType](#coercerequestparameterdatatype)
-- [coerceRequestBodyDataType](#coercerequestbodydatatype)
-- [coerceResponseBodyDataType](#coerceresponsebodydatatype)
-- [removeAdditionalRequestData](#removeadditionalrequestdata)
-- [removeAdditionalResponseData](#removeadditionalresponsedata)
-- [useDefaultValuesInRequestParameters](#usedefaultvaluesinrequestparameters)
-- [useDefaultValuesInRequestBody](#usedefaultvaluesinrequestbody)
-- [useDefaultValuesInResponseBody](#usedefaultvaluesinresponsebody)
 
 #### document
 
@@ -275,474 +411,6 @@ router.useService(TrieRouterOpenApi, {
     servers: [
       {url: 'https://api.example.com/v1'},
     ],
-  },
-});
-```
-
-#### validateRequest
-
-Тип: `boolean`  
-По умолчанию `false`  
-
-Включает автоматическую проверку входящих параметров и тела запроса на
-соответствие описанной OpenAPI схеме. В случае ошибки возвращает ответ
-*400 BadRequest*.
-
-```js
-router.useService(TrieRouterOpenApi, {
-  validateRequest: true,
-});
-
-router.defineRoute({
-  method: HttpMethod.GET,
-  path: '/items',
-  meta: {
-    openApi: {
-      parameters: [{
-        name: 'sort',
-        in: OAParameterLocation.QUERY,
-        schema: { 
-          type: OADataType.STRING, 
-          enum: ['asc', 'desc'], // только два конкретных значения
-        },
-      }],
-    },
-  },
-  handler(ctx) { /* ... */ },
-});
-
-// если клиент отправит GET /items?sort=invalid
-// маршрутизатор прервет запрос и вернет ошибку:
-// 400 Bad Request:
-// Value at "/request/query/sort" must be equal to one of the allowed values.
-```
-
-#### validateResponse
-
-Тип: `boolean`  
-По умолчанию `false`  
-
-Включает автоматическую проверку исходящих данных, возвращаемых из обработчика
-маршрута, на соответствие OpenAPI схеме. В случае ошибки возвращает ответ
-*500 InternalServerError*.
-
-```js
-router.useService(TrieRouterOpenApi, {
-  validateResponse: true,
-});
-
-router.defineRoute({
-  method: HttpMethod.GET,
-  path: '/count',
-  meta: {
-    openApi: {
-      responses: {
-        200: {
-          description: 'Total count',
-          content: {
-            [OAMediaType.APPLICATION_JSON]: {
-              schema: {type: OADataType.NUMBER},
-            },
-          },
-        },
-      },
-    },
-  },
-  handler() {
-    return "10"; 
-    // так как схема ожидает число, но возвращается строка,
-    // маршрутизатор автоматически перехватит ответ
-    // и вернет клиенту 500 Internal Server Error
-  }
-});
-```
-
-#### parseRequestParameterContent
-
-Тип: `boolean`  
-По умолчанию `false`  
-*Требует включенной опции `validateRequest: true`*
-
-Включает автоматический парсинг параметров запроса, если они описаны через
-объект `content`. При успешном разборе значение параметра подменяется
-в контексте запроса, а при неудаче выбрасывается ошибка.
-
-```js
-router.useService(TrieRouterOpenApi, {
-  validateRequest: true,
-  parseRequestParameterContent: true,
-});
-
-router.defineRoute({
-  method: HttpMethod.GET,
-  path: '/search',
-  meta: {
-    openApi: {
-      parameters: [{
-        name: 'filter',
-        in: OAParameterLocation.QUERY,
-        content: {
-          [OAMediaType.APPLICATION_JSON]: {
-            schema: {type: OADataType.OBJECT},
-          },
-        },
-      }],
-    },
-  },
-  handler(ctx) {
-    // при запросе GET /search?filter={"active":true}
-    // строка автоматически приводится к объекту
-    console.log(ctx.query.filter); // {active: true}
-  },
-});
-```
-
-#### coerceRequestParameterDataType
-
-Тип: `boolean`  
-По умолчанию `false`  
-*Требует включенной опции `validateRequest: true`*
-
-Включает приведение типов для параметров запроса в соответствии с их схемой.
-Например, строковое значение `"10"` будет преобразовано в число `10`.
-Преобразованные значения заменяют исходные данные в контексте запроса.
-
-```js
-router.useService(TrieRouterOpenApi, {
-  validateRequest: true,
-  coerceRequestParameterDataType: true,
-});
-
-router.defineRoute({
-  method: HttpMethod.GET,
-  path: '/users/:id',
-  meta: {
-    openApi: {
-      parameters: [{
-        name: 'id',
-        in: OAParameterLocation.PATH,
-        schema: {type: OADataType.NUMBER},
-      }],
-    },
-  },
-  handler(ctx) {
-    // при запросе GET /users/123
-    // без данной опции, значение параметра ctx.params.id
-    // было бы строкой "123", но с включенной опцией значение
-    // приводится к числу согласно указанному типу
-    console.log(typeof ctx.params.id); // "number"
-  }
-});
-```
-
-#### coerceRequestBodyDataType
-
-Тип: `boolean`  
-По умолчанию `false`  
-*Требует включенной опции `validateRequest: true`*
-
-Включает приведение типов для полей объекта и элементов массива внутри
-входящего тела запроса. Полезно, если клиент присылает данные в свободном
-формате (например, числа в виде строк).
-
-```js
-router.useService(TrieRouterOpenApi, {
-  validateRequest: true,
-  coerceRequestBodyDataType: true,
-});
-
-router.defineRoute({
-  method: HttpMethod.POST,
-  path: '/items',
-  meta: {
-    openApi: {
-      requestBody: {
-        content: {
-          [OAMediaType.APPLICATION_JSON]: {
-            schema: {
-              type: OADataType.OBJECT,
-              properties: {
-                count: {type: OADataType.NUMBER},
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-  handler(ctx) {
-    // если клиент пришлет JSON {"count": "42"},
-    // значение "42" (строка) станет числом 42
-    console.log(typeof ctx.body.count); // "number"
-  }
-});
-```
-
-#### coerceResponseBodyDataType
-
-Тип: `boolean`  
-По умолчанию `false`  
-*Требует включенной опции `validateResponse: true`*
-
-Включает автоматическое приведение типов данных в теле ответа (которое
-возвращает обработчик маршрута) к типам, указанным в схеме ответа,
-перед отправкой данных клиенту.
-
-```js
-router.useService(TrieRouterOpenApi, {
-  validateResponse: true,
-  coerceResponseBodyDataType: true,
-});
-
-router.defineRoute({
-  method: HttpMethod.GET,
-  path: '/stats',
-  meta: {
-    openApi: {
-      responses: {
-        200: {
-          description: 'Stats',
-          content: {
-            [OAMediaType.APPLICATION_JSON]: {
-              schema: {
-                type: OADataType.OBJECT,
-                properties: {
-                  total: {type: OADataType.NUMBER},
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-  handler: () => {
-    // обработчик возвращает значение свойства как строку
-    return {total: "150"};
-    // перед отправкой клиенту строка "150" будет
-    // автоматически приведена к числу 150 согласно схеме
-  }
-});
-```
-
-#### removeAdditionalRequestData
-
-Тип: `boolean`  
-По умолчанию `false`  
-*Требует включенной опции `validateRequest: true`*
-
-Удаляет из параметров и тела запроса все свойства, которые явно не описаны
-в схеме. Чтобы опция работала для объектов, в их схеме должно быть явно
-указано `additionalProperties: false`.
-
-```js
-router.useService(TrieRouterOpenApi, {
-  validateRequest: true,
-  removeAdditionalRequestData: true,
-});
-
-router.defineRoute({
-  method: HttpMethod.POST,
-  path: '/login',
-  meta: {
-    openApi: {
-      requestBody: {
-        content: {
-          [OAMediaType.APPLICATION_JSON]: {
-            schema: {
-              type: OADataType.OBJECT,
-              properties: {
-                username: {type: OADataType.STRING},
-              },
-              additionalProperties: false, // обязательное условие
-            },
-          },
-        },
-      },
-    },
-  },
-  handler(ctx) {
-    // если клиент отправит {"username": "admin", "role": "root"},
-    // поле "role" будет вырезано до входа в обработчик, так как
-    // схема объекта исключает дополнительные поля
-    console.log(ctx.body); // {username: "admin"}
-  },
-});
-```
-
-#### removeAdditionalResponseData
-
-Тип: `boolean`  
-По умолчанию `false`  
-*Требует включенной опции `validateResponse: true`*
-
-Удаляет из тела ответа все поля, которые явно не описаны в схеме. Чтобы
-опция работала для объектов, в их схеме должно быть явно указано
-`additionalProperties: false`.
-
-```js
-router.useService(TrieRouterOpenApi, {
-  validateResponse: true,
-  removeAdditionalResponseData: true,
-});
-
-router.defineRoute({
-  method: HttpMethod.GET,
-  path: '/profile',
-  meta: {
-    openApi: {
-      responses: {
-        200: {
-          description: 'Profile data',
-          content: {
-            [OAMediaType.APPLICATION_JSON]: {
-              schema: {
-                type: OADataType.OBJECT,
-                properties: {
-                  username: {type: OADataType.STRING},
-                },
-                additionalProperties: false, // обязательное условие
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-  handler() {
-    // обработчик может извлекать из базы чувствительные данные
-    return {username: "admin", passwordHash: "secret123"};
-    // клиент получит только {"username": "admin"},
-    // поле "passwordHash" автоматически удаляется
-  },
-});
-```
-
-#### useDefaultValuesInRequestParameters
-
-Тип: `boolean`  
-По умолчанию `false`  
-*Требует включенной опции `validateRequest: true`*
-
-Автоматически подставляет значения по умолчанию, указанные через ключевое
-слово `default` в схеме параметров запроса. Добавленные значения будут
-доступны в контексте запроса.
-
-```js
-router.useService(TrieRouterOpenApi, {
-  validateRequest: true,
-  useDefaultValuesInRequestParameters: true,
-});
-
-router.defineRoute({
-  method: HttpMethod.GET,
-  path: '/items',
-  meta: {
-    openApi: {
-      parameters: [{
-        name: 'limit',
-        in: OAParameterLocation.QUERY,
-        schema: {
-          type: OADataType.NUMBER,
-          default: 20,
-        },
-      }],
-    },
-  },
-  handler(ctx) {
-    // при запросе GET /items (без передачи ?limit=...)
-    // значение по умолчанию подставится автоматически
-    console.log(ctx.query.limit); // 20
-  },
-});
-```
-
-#### useDefaultValuesInRequestBody
-
-Тип: `boolean`  
-По умолчанию `false`  
-*Требует включенной опции `validateRequest: true`*
-
-Автоматически заполняет отсутствующие поля во входящем теле запроса значениями
-по умолчанию, описанными в схеме с помощью ключевого слова `default`.
-
-```js
-router.useService(TrieRouterOpenApi, {
-  validateRequest: true,
-  useDefaultValuesInRequestBody: true,
-});
-
-router.defineRoute({
-  method: HttpMethod.POST,
-  path: '/users',
-  meta: {
-    openApi: {
-      requestBody: {
-        content: {
-          [OAMediaType.APPLICATION_JSON]: {
-            schema: {
-              type: OADataType.OBJECT,
-              properties: {
-                name: {type: OADataType.STRING},
-                active: {type: OADataType.BOOLEAN, default: true},
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-  handler: (ctx) => {
-    // если клиент отправит лишь {"name": "John"},
-    // свойство "active" получит значение по умолчанию
-    console.log(ctx.body); // {name: "John", active: true}
-  },
-});
-```
-
-#### useDefaultValuesInResponseBody
-
-Тип: `boolean`  
-По умолчанию `false`  
-*Требует включенной опции `validateResponse: true`*
-
-Автоматически добавляет отсутствующие свойства в возвращаемый объект ответа,
-используя значения по умолчанию, указанные в ключевом слове `default` схемы.
-
-```js
-router.useService(TrieRouterOpenApi, {
-  validateResponse: true,
-  useDefaultValuesInResponseBody: true,
-});
-
-router.defineRoute({
-  method: HttpMethod.GET,
-  path: '/data',
-  meta: {
-    openApi: {
-      responses: {
-        200: {
-          description: 'Data response',
-          content: {
-            [OAMediaType.APPLICATION_JSON]: {
-              schema: {
-                type: OADataType.OBJECT,
-                properties: {
-                  items: {type: OADataType.ARRAY},
-                  status: {type: OADataType.STRING, default: "success"},
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-  handler() {
-    // обработчик возвращает неполный объект
-    return {items: [1, 2, 3]};
-    // клиент в итоге получит:
-    // {"items": [1, 2, 3], "status": "success"}
   },
 });
 ```

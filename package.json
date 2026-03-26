@@ -40,8 +40,6 @@
     "@e22m4u/js-format": "~0.4.0",
     "@e22m4u/js-openapi": "~0.1.0",
     "@e22m4u/js-service": "~0.6.2",
-    "ajv": "~8.18.0",
-    "ajv-formats": "~3.0.1",
     "http-errors": "~2.0.1"
   },
   "peerDependencies": {

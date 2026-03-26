@@ -13,19 +13,8 @@ declare module '@e22m4u/js-trie-router' {
 /**
  * Trie Router OpenApi options.
  */
-export type TrieRouterOpenApiOption = {
+export type TrieRouterOpenApiOptions = {
   document?: OADocumentInput;
-  validateRequest?: boolean;
-  validateResponse?: boolean;
-  parseRequestParameterContent?: boolean;
-  coerceRequestParameterDataType?: boolean;
-  coerceRequestBodyDataType?: boolean;
-  coerceResponseBodyDataType?: boolean;
-  removeAdditionalRequestData?: boolean;
-  removeAdditionalResponseData?: boolean;
-  useDefaultValuesInRequestParameters?: boolean;
-  useDefaultValuesInRequestBody?: boolean;
-  useDefaultValuesInResponseBody?: boolean;
 };
 
 /**
@@ -38,5 +27,5 @@ export class TrieRouterOpenApi extends Service {
    * @param container
    * @param options
    */
-  constructor(container: ServiceContainer, options?: TrieRouterOpenApiOption);
+  constructor(container: ServiceContainer, options?: TrieRouterOpenApiOptions);
 }
