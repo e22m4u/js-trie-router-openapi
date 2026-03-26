@@ -1,7 +1,7 @@
 {
   "name": "@e22m4u/js-trie-router-openapi",
   "version": "0.1.0",
-  "description": "Модуль OpenAPI документации для @e22m4u/js-trie-router",
+  "description": "Создание OpenAPI документа для @e22m4u/js-trie-router",
   "author": "Mikhail Evstropov <e22m4u@yandex.ru>",
   "license": "MIT",
   "keywords": [
