@@ -239,7 +239,7 @@ const builder = router.get(OADocumentBuilder);
 // регистрация компонента схемы соответствющим методом
 builder.defineSchemaComponent('mySchema', {type: OADataType.OBJECT});
 
-// создание объекта-ссылки с использованием утилиты
+// создание объекта-ссылки на компонент схемы
 const mySchemaRef = oaSchemaRef('mySchema');
 console.log(mySchemaRef); // {$ref: '#/components/schemas/mySchema'}
 ```
