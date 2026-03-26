@@ -234,7 +234,7 @@ OpenAPI позволяет выносить повторяющиеся учас�
 import {oaSchemaRef, OADocumentBuilder} from '@e22m4u/js-trie-router-openapi';
 
 // извлечение сборщика из маршрутизатора
-router.get(OADocumentBuilder);
+const builder = router.get(OADocumentBuilder);
 
 // регистрация компонента схемы соответствющим методом
 builder.defineSchemaComponent('mySchema', {type: OADataType.OBJECT});
