@@ -5,10 +5,10 @@
   "author": "Mikhail Evstropov <e22m4u@yandex.ru>",
   "license": "MIT",
   "keywords": [
-    "trie",
-    "router",
-    "schema",
-    "openapi"
+    "js-trie-router",
+    "openapi",
+    "swagger",
+    "schema"
   ],
   "homepage": "https://gitverse.ru/e22m4u/js-trie-router-openapi",
   "repository": {
