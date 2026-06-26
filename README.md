@@ -77,6 +77,78 @@ router.defineRoute({
 });
 ```
 
+Создание маршрута для извлечения документации.
+
+```js
+// при запросе /openapi.json будет сформирован
+// OpenAPI документ в формате application/json
+router.defineRoute({
+  method: HttpMethod.GET,
+  path: '/openapi.json',
+  handler: () => {
+    const builder = router.getService(OADocumentBuilder);
+    return builder.buildJson();
+  },
+});
+```
+
+Форматирование JSON документа (добавление переносов).
+
+```js
+import {OADocumentBuilder} from '@e22m4u/js-trie-router-openapi';
+
+const builder = router.getService(OADocumentBuilder);
+
+const jsonDoc = builder.buildJson(2);
+// первый аргумент указывает количество пробелов
+// для каждого уровня вложенности, и может быть
+// опущен в целях экономии размера документа
+
+console.log(jsonDoc);
+// {
+//   "openapi": "3.1.2",
+//   "info": {
+//     "title": "API Documentation",
+//     "version": "0.0.1"
+//   },
+//   "paths": {
+//     "/cities": {
+//       "post": {
+//         "summary": "Create a new city",
+//         "requestBody": {
+//           "description": "Document data",
+//           "required": true,
+//           "content": {
+//             "application/json": {
+//               "schema": {
+//                 "$ref": "#/components/schemas/city"
+//               }
+//             }
+//           }
+//         },
+//         "responses": {
+//           "201": {
+//             "description": "Document created",
+//             "content": {
+//               "application/json": {
+//                 "schema": {
+//                   "$ref": "#/components/schemas/city"
+//                 }
+//               }
+//             }
+//           }
+//         }
+//       }
+//     }
+//   },
+//   "components": {
+//     "schemas": {
+//       "city": { ... }
+//     }
+//   }
+// }
+```
+
 Определение компонента схемы.
 
 ```js
@@ -149,76 +221,6 @@ router.defineRoute({
     // ...
   },
 });
-```
-
-Отдача документации через маршрутизатор.
-
-```js
-router.defineRoute({
-  method: HttpMethod.GET,
-  path: '/openapi.json',
-  handler: () => {
-    const builder = router.getService(OADocumentBuilder);
-    return builder.buildJson();
-  },
-});
-```
-
-Формирование JSON документа.
-
-```js
-import {OADocumentBuilder} from '@e22m4u/js-trie-router-openapi';
-
-const builder = router.getService(OADocumentBuilder);
-
-const jsonDoc = builder.buildJson(2);
-// первый аргумент указывает количество пробелов
-// для каждого уровня вложенности, и может быть
-// опущен в целях экономии размера документа
-
-console.log(jsonDoc);
-// {
-//   "openapi": "3.1.2",
-//   "info": {
-//     "title": "API Documentation",
-//     "version": "0.0.1"
-//   },
-//   "paths": {
-//     "/cities": {
-//       "post": {
-//         "summary": "Create a new city",
-//         "requestBody": {
-//           "description": "Document data",
-//           "required": true,
-//           "content": {
-//             "application/json": {
-//               "schema": {
-//                 "$ref": "#/components/schemas/city"
-//               }
-//             }
-//           }
-//         },
-//         "responses": {
-//           "201": {
-//             "description": "Document created",
-//             "content": {
-//               "application/json": {
-//                 "schema": {
-//                   "$ref": "#/components/schemas/city"
-//                 }
-//               }
-//             }
-//           }
-//         }
-//       }
-//     }
-//   },
-//   "components": {
-//     "schemas": {
-//       "city": { ... }
-//     }
-//   }
-// }
 ```
 
 ## Компоненты и ссылки
