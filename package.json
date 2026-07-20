@@ -10,10 +10,10 @@
     "swagger",
     "schema"
   ],
-  "homepage": "https://gitverse.ru/e22m4u/js-trie-router-openapi",
+  "homepage": "https://github.com/e22m4u/js-trie-router-openapi",
   "repository": {
     "type": "git",
-    "url": "git+https://gitverse.ru/e22m4u/js-trie-router-openapi.git"
+    "url": "git+https://github.com/e22m4u/js-trie-router-openapi.git"
   },
   "type": "module",
   "types": "./src/index.d.ts",
